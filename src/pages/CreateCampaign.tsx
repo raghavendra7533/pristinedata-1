@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { Icon } from "@iconify/react";
 import CampaignSetup from "@/components/campaign/CampaignSetup";
 import CampaignPreview from "@/components/campaign/CampaignPreview";
 import CampaignReview from "@/components/campaign/CampaignReview";
@@ -57,106 +57,111 @@ const CreateCampaign = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Header with Gradient Band */}
-      <section className="relative bg-gradient-hero px-6 py-4">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
-        
-        <div className="max-w-7xl mx-auto relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
+    <div className="min-h-full">
+      {/* Header - Card Style Top Bar */}
+      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          {/* Left - Navigation */}
+          <div className="flex items-center gap-3">
+            <button
               onClick={() => navigate("/campaigns")}
-              className="text-white hover:bg-white/10"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+              <Icon icon="solar:arrow-left-linear" className="h-4 w-4" />
+            </button>
             <div>
-              <h1 className="text-xl font-semibold text-white">
+              <h1 className="text-sm font-semibold text-foreground">
                 {campaignData.name || "New Campaign"}
               </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <Sparkles className="h-3.5 w-3.5 text-white/80" />
-                <span className="text-xs text-white/80">Campaign Builder</span>
-              </div>
+              <span className="text-xs text-muted-foreground">Sequence Builder</span>
             </div>
           </div>
 
-          {/* Step Indicators */}
-          <div className="flex items-center gap-4">
+          {/* Center - Step Progress */}
+          <div className="flex items-center">
             {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`flex items-center justify-center w-7 h-7 rounded-full transition-all ${
-                      step.completed
-                        ? "bg-white text-primary"
-                        : currentStep === step.number
-                        ? "bg-white text-primary ring-4 ring-white/30"
-                        : "bg-white/20 text-white"
-                    }`}
-                  >
-                    {step.completed ? (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <span className="text-sm font-medium">{step.number}</span>
-                    )}
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${
-                      currentStep === step.number ? "text-white" : "text-white/70"
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                </div>
+              <div key={step.number} className="flex items-center">
+                <button
+                  onClick={() => {
+                    if (step.completed || currentStep === step.number) {
+                      setCurrentStep(step.number as CampaignStep);
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    currentStep === step.number
+                      ? "text-foreground"
+                      : step.completed
+                      ? "text-primary hover:text-primary/80 cursor-pointer"
+                      : "text-muted-foreground cursor-default"
+                  }`}
+                >
+                  {step.label}
+                </button>
                 {index < steps.length - 1 && (
-                  <div className={`w-12 h-0.5 ${step.completed ? "bg-white" : "bg-white/30"}`} />
+                  <Icon icon="solar:alt-arrow-right-linear" className="h-3 w-3 text-muted-foreground/50 mx-1" />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
+          {/* Right - Actions */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate("/campaigns")}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="text-muted-foreground hover:text-foreground"
             >
               Exit
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleSave}
-              className="text-white hover:bg-white/10"
             >
-              Save
+              Save Draft
             </Button>
             {currentStep < 3 ? (
-              <Button 
-                onClick={handleNext} 
-                className="bg-white text-primary hover:bg-white/90"
+              <Button
+                size="sm"
+                onClick={handleNext}
+                className="bg-primary hover:bg-primary/90"
               >
-                Next
+                Continue
+                <Icon icon="solar:arrow-right-linear" className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             ) : (
-              <Button 
-                onClick={handleLaunch} 
-                className="bg-white text-primary hover:bg-white/90"
+              <Button
+                size="sm"
+                onClick={handleLaunch}
+                className="bg-primary hover:bg-primary/90"
               >
-                Launch Campaign
+                <Icon icon="solar:rocket-linear" className="h-3.5 w-3.5 mr-1.5" />
+                Launch
               </Button>
             )}
           </div>
         </div>
-      </section>
+
+        {/* Progress Bar */}
+        <div className="max-w-5xl mx-auto mt-3">
+          <div className="flex h-1 rounded-full overflow-hidden bg-muted">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className={`flex-1 transition-colors duration-300 ${
+                  step.completed || currentStep === step.number
+                    ? "bg-primary"
+                    : "bg-transparent"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {currentStep === 1 && (
           <CampaignSetup
             data={campaignData}

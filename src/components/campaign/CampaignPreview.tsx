@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Search, Sparkles, CheckCircle, XCircle } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Icon } from "@iconify/react";
 
 interface CampaignPreviewProps {
   data: {
@@ -80,13 +72,50 @@ If now isn't the right time, I completely understand. Feel free to reach out whe
 
 Best,
 Pristine Data Team`
+    },
+    {
+      id: 4,
+      title: "3rd Follow-up",
+      subject: `One More Thing for ${contact.company}`,
+      content: `Hi ${contact.name},
+
+I know your inbox is probably overflowing, so I'll keep this brief.
+
+I came across some recent news about ${contact.company} and thought our platform could be particularly relevant given your current initiatives.
+
+If you're open to a quick 10-minute call, I'd love to share how we've helped similar companies achieve:
+• 3x faster partner onboarding
+• 90% reduction in manual data entry
+• Real-time compliance monitoring
+
+No pressure at all - just wanted to make sure you had all the information.
+
+Best,
+Pristine Data Team`
+    },
+    {
+      id: 5,
+      title: "Final Touch",
+      subject: `Closing the Loop - ${contact.company}`,
+      content: `Hi ${contact.name},
+
+This will be my last email on this topic.
+
+I genuinely believe our platform could help ${contact.company} streamline operations and save significant time on partner integrations.
+
+If the timing isn't right now, no worries at all. Feel free to reach out whenever you're ready to explore this further.
+
+Wishing you and the team at ${contact.company} continued success.
+
+Warm regards,
+Pristine Data Team`
     }
   ];
-  
+
   return stages[stage - 1];
 };
 
-const CampaignPreview = ({ data, onNext, onBack }: CampaignPreviewProps) => {
+const CampaignPreview = ({ data }: CampaignPreviewProps) => {
   const [selectedEmail, setSelectedEmail] = useState(mockContacts[0].email);
   const [searchQuery, setSearchQuery] = useState("");
   const [showEmailSearch, setShowEmailSearch] = useState(false);
@@ -97,49 +126,42 @@ const CampaignPreview = ({ data, onNext, onBack }: CampaignPreviewProps) => {
 
   const selectedContact = mockContacts.find(c => c.email === selectedEmail) || mockContacts[0];
 
-  const stages = Array.from({ length: data.stages }, (_, i) => 
+  const stages = Array.from({ length: data.stages }, (_, i) =>
     generateEmailContent(selectedContact, i + 1)
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold">Preview Your Campaign</h2>
-        <p className="text-muted-foreground">
-          Review email content for each stage and test with specific contacts
-        </p>
-      </div>
-
-      <Card className="border-border/50 shadow-lg">
-        <CardHeader className="border-b border-border/50 bg-muted/30">
+    <div className="space-y-4 animate-fade-in">
+      {/* Email Preview Card */}
+      <Card>
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">Campaign Preview</CardTitle>
-            <Badge variant="outline" className="text-sm">
-              <Mail className="h-3.5 w-3.5 mr-1.5" />
+            <div className="flex items-center gap-2">
+              <Icon icon="solar:letter-linear" className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">Email Preview</CardTitle>
+            </div>
+            <Badge variant="outline" className="text-xs">
               {data.stages} {data.stages === 1 ? "Stage" : "Stages"}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          {/* Email Selector */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">
-              Preview Email (max 5) <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
+        <CardContent className="p-4 pt-0 space-y-4">
+          {/* Contact Selector */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Preview Contact</Label>
+              <div className="relative">
                 <Input
-                  placeholder="Search Email"
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setShowEmailSearch(true)}
-                  className="h-11"
+                  className="h-7 w-40 text-xs"
                 />
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                
+                <Icon icon="solar:magnifer-linear" className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+
                 {showEmailSearch && searchQuery && (
-                  <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-lg shadow-lg z-10 max-h-48 overflow-auto">
+                  <div className="absolute top-full mt-1 right-0 w-64 bg-card border border-border rounded-lg shadow-lg z-10 max-h-40 overflow-auto">
                     {filteredContacts.map((contact) => (
                       <button
                         key={contact.email}
@@ -148,7 +170,7 @@ const CampaignPreview = ({ data, onNext, onBack }: CampaignPreviewProps) => {
                           setSearchQuery("");
                           setShowEmailSearch(false);
                         }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-muted text-sm"
+                        className="w-full px-3 py-2 text-left hover:bg-muted text-xs"
                       >
                         {contact.email}
                       </button>
@@ -156,110 +178,98 @@ const CampaignPreview = ({ data, onNext, onBack }: CampaignPreviewProps) => {
                   </div>
                 )}
               </div>
-              <Button className="bg-primary hover:bg-primary/90 px-6">
-                Preview Email
-              </Button>
             </div>
-            
-            {/* Selected emails list */}
-            <div className="flex flex-wrap gap-2 mt-3">
+
+            {/* Contact chips */}
+            <div className="flex items-center gap-1">
               {mockContacts.map((contact) => (
                 <button
                   key={contact.email}
                   onClick={() => setSelectedEmail(contact.email)}
-                  className="group"
+                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    selectedEmail === contact.email
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
                 >
-                  <Badge
-                    variant={selectedEmail === contact.email ? "default" : "secondary"}
-                    className={`px-3 py-1.5 text-sm transition-all cursor-pointer ${
-                      selectedEmail === contact.email
-                        ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
-                        : "hover:bg-secondary/80"
-                    }`}
-                  >
-                    {contact.email}
-                  </Badge>
+                  {contact.name}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Email Stage Tabs */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold">Email Preview</Label>
-            
-            <Tabs defaultValue="1" className="w-full">
-              <TabsList className="w-full justify-start h-auto gap-2 bg-transparent p-0">
-                {stages.map((stage) => (
-                  <TabsTrigger
-                    key={stage.id}
-                    value={stage.id.toString()}
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-                  >
-                    {stage.title}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
+          <Tabs defaultValue="1" className="w-full">
+            <TabsList className="w-full justify-start h-8 gap-1 bg-muted/30 p-1">
               {stages.map((stage) => (
-                <TabsContent key={stage.id} value={stage.id.toString()} className="mt-6">
-                  <Card className="border-border/50">
-                    <div className="bg-muted/50 px-6 py-3 border-b border-border/50 flex items-center gap-3">
-                      <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                      </div>
-                    </div>
-                    <CardContent className="p-6 space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          <span className="font-semibold">To:</span> {selectedEmail}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          <span className="font-semibold">From:</span> Pristine Data
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-semibold">Subject:</span> {stage.subject}
-                        </p>
-                      </div>
-                      
-                      <div className="border-t border-border/50 pt-4">
-                        <div className="prose prose-sm max-w-none">
-                          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                            {stage.content}
-                          </pre>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                <TabsTrigger
+                  key={stage.id}
+                  value={stage.id.toString()}
+                  className="text-xs px-3 py-1 data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                >
+                  {stage.title}
+                </TabsTrigger>
               ))}
-            </Tabs>
-          </div>
+            </TabsList>
+
+            {stages.map((stage) => (
+              <TabsContent key={stage.id} value={stage.id.toString()} className="mt-3">
+                <div className="border border-border rounded-lg overflow-hidden">
+                  {/* Email header */}
+                  <div className="bg-muted/30 px-4 py-2 border-b border-border space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">To:</span> {selectedEmail}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">From:</span> Pristine Data
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Subject:</span> {stage.subject}
+                    </p>
+                  </div>
+
+                  {/* Email body */}
+                  <div className="p-4 max-h-64 overflow-y-auto scrollbar-minimal">
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
+                      {stage.content}
+                    </pre>
+                  </div>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-4 pb-8">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onBack}
-          className="px-8 border-2 hover:bg-destructive/10 hover:border-destructive hover:text-destructive"
-        >
-          <XCircle className="h-5 w-5 mr-2" />
-          Reject Campaign
-        </Button>
-        <Button
-          size="lg"
-          onClick={onNext}
-          className="px-8 bg-primary hover:bg-primary/90"
-        >
-          <CheckCircle className="h-5 w-5 mr-2" />
-          Approve Campaign
-        </Button>
-      </div>
+      {/* Summary Stats Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Icon icon="solar:chart-linear" className="h-4 w-4 text-primary" />
+            <CardTitle className="text-base font-semibold">Campaign Summary</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Campaign</p>
+              <p className="text-sm font-medium text-foreground">{data.name || "Untitled"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Theme</p>
+              <p className="text-sm font-medium text-foreground capitalize">{data.theme?.replace("-", " ") || "Not selected"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Stages</p>
+              <p className="text-sm font-medium text-foreground">{data.stages}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Contacts</p>
+              <p className="text-sm font-medium text-foreground">{mockContacts.length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

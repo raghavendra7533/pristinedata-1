@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlayCircle, Settings } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { HealthScoreCard } from "@/components/content-iq/HealthScoreCard";
 import { CategoryCard } from "@/components/content-iq/CategoryCard";
 import { GapsSection } from "@/components/content-iq/GapsSection";
@@ -11,7 +11,7 @@ import { EvidenceDrawer } from "@/components/content-iq/EvidenceDrawer";
 import { ScoringRulesDialog } from "@/components/content-iq/ScoringRulesDialog";
 import { NarrativeInsights } from "@/components/content-iq/NarrativeInsights";
 import { ContentIQAssistant } from "@/components/content-iq/ContentIQAssistant";
-import { BarChart3, FileCheck, Target, FileText, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 const ContentIQ = () => {
@@ -35,7 +35,7 @@ const ContentIQ = () => {
       score: 3,
       maxScore: 5,
       note: "Good volume, but need more case studies",
-      icon: BarChart3,
+      icon: "solar:chart-2-bold",
       tooltip: "Measures the breadth of your content library",
     },
     {
@@ -43,7 +43,7 @@ const ContentIQ = () => {
       score: 3,
       maxScore: 5,
       note: "Content is clear, needs deeper proof points",
-      icon: FileCheck,
+      icon: "solar:verified-check-bold",
       tooltip: "Evaluates content clarity and depth",
     },
     {
@@ -51,7 +51,7 @@ const ContentIQ = () => {
       score: 1,
       maxScore: 5,
       note: "Critical gap: missing competitor comparisons",
-      icon: Target,
+      icon: "solar:target-bold",
       tooltip: "Assesses competitive positioning materials",
     },
     {
@@ -59,7 +59,7 @@ const ContentIQ = () => {
       score: 3,
       maxScore: 5,
       note: "Decks are strong, add more use-case examples",
-      icon: FileText,
+      icon: "solar:presentation-graph-bold",
       tooltip: "Reviews sales presentation assets",
     },
     {
@@ -67,7 +67,7 @@ const ContentIQ = () => {
       score: 2,
       maxScore: 5,
       note: "Limited discovery questions and objection docs",
-      icon: BookOpen,
+      icon: "solar:notebook-bold",
       tooltip: "Checks enablement and process documentation",
     },
   ];
@@ -136,34 +136,43 @@ const ContentIQ = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-primary via-primary-light to-secondary px-6 py-8 mb-8 shadow-lg">
+    <div className="min-h-full bg-background">
+      {/* Header Section */}
+      <div className="border-b border-border bg-card px-6 py-5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Content IQ — Content Health Report
-              </h1>
-              <p className="text-white/80 text-sm">
-                Last assessed: {formattedDate}
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <Icon icon="solar:chart-2-bold" className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">Content IQ</h1>
+                <p className="text-sm text-muted-foreground">
+                  Last assessed: {formattedDate}
+                </p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/personalization" className="gap-2">
+                  <Icon icon="solar:layers-linear" className="h-4 w-4" />
+                  Content HQ
+                </Link>
+              </Button>
               <Button
-                variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                variant="outline"
+                size="sm"
                 onClick={() => setShowScoringRules(true)}
               >
-                <Settings className="w-4 h-4 mr-2" />
+                <Icon icon="solar:settings-linear" className="h-4 w-4 mr-2" />
                 Scoring Rules
               </Button>
               <Button
-                className="bg-white text-primary hover:bg-white/90"
+                size="sm"
                 onClick={handleRunAssessment}
                 disabled={isLoading}
               >
-                <PlayCircle className="w-4 h-4 mr-2" />
+                <Icon icon="solar:play-circle-linear" className="h-4 w-4 mr-2" />
                 Run Assessment
               </Button>
             </div>
@@ -172,7 +181,7 @@ const ContentIQ = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 pb-12 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {isLoading ? (
           <LoadingSkeleton />
         ) : (

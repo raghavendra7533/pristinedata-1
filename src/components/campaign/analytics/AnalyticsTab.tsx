@@ -16,9 +16,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { Download } from "lucide-react";
+import { Icon } from "@iconify/react";
 
 interface AnalyticsTabProps {
   dailyData: Array<{
@@ -80,7 +79,7 @@ export function AnalyticsTab({ dailyData }: AnalyticsTabProps) {
   return (
     <div className="space-y-6">
       {/* Engagement Over Time Chart */}
-      <Card className="border-2">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -121,16 +120,15 @@ export function AnalyticsTab({ dailyData }: AnalyticsTabProps) {
                   tickLine={false}
                   className="text-xs fill-muted-foreground"
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                   }}
                   cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                 />
-                <Legend />
                 <Bar 
                   dataKey="sent" 
                   name="Sent"
@@ -156,7 +154,7 @@ export function AnalyticsTab({ dailyData }: AnalyticsTabProps) {
       </Card>
 
       {/* Step Analytics / Sequence Breakup Table */}
-      <Card className="border-2">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -166,7 +164,7 @@ export function AnalyticsTab({ dailyData }: AnalyticsTabProps) {
               </p>
             </div>
             <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
+              <Icon icon="solar:download-linear" className="h-4 w-4 mr-2" />
               Download as CSV
             </Button>
           </div>

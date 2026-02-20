@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Send } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -107,16 +107,16 @@ export const ContentIQAssistant = () => {
       {isOpen && (
         <div className="fixed right-6 bottom-24 w-[360px] max-h-[520px] bg-muted rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 border border-border">
           {/* Header */}
-          <div className="bg-green-600 text-white px-5 py-4 flex justify-between items-center">
+          <div className="bg-violet-600 text-white px-5 py-4 flex justify-between items-center">
             <div>
               <div className="font-semibold text-[15px]">Content IQ</div>
               <div className="text-xs opacity-90">Ask about your content library</div>
             </div>
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
             >
-              <X className="w-5 h-5" />
+              <Icon icon="solar:close-circle-linear" className="w-5 h-5" />
             </button>
           </div>
 
@@ -127,8 +127,8 @@ export const ContentIQAssistant = () => {
                 key={idx}
                 className={`rounded-xl px-3 py-2.5 text-[13px] leading-relaxed max-w-full ${
                   msg.role === "bot"
-                    ? "bg-sky-100 text-foreground self-start"
-                    : "bg-green-600 text-white self-end ml-auto"
+                    ? "bg-violet-100 dark:bg-violet-950/50 text-foreground self-start"
+                    : "bg-violet-600 text-white self-end ml-auto"
                 }`}
               >
                 <p>{msg.content}</p>
@@ -168,9 +168,9 @@ export const ContentIQAssistant = () => {
             <Button
               size="icon"
               onClick={handleSend}
-              className="rounded-full bg-green-600 hover:bg-green-700 text-white"
+              className="rounded-full bg-violet-600 hover:bg-violet-700 text-white"
             >
-              <Send className="w-4 h-4" />
+              <Icon icon="solar:plain-2-linear" className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -179,11 +179,9 @@ export const ContentIQAssistant = () => {
       {/* FAB Launcher */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed right-8 bottom-8 bg-green-600 text-white rounded-full px-5 py-3 flex items-center gap-2 font-semibold text-sm shadow-lg shadow-green-600/35 hover:bg-green-700 transition-colors z-40"
+        className="fixed right-8 bottom-8 bg-violet-600 text-white rounded-full px-5 py-3 flex items-center gap-2 font-semibold text-sm shadow-lg shadow-violet-600/35 hover:bg-violet-700 transition-colors z-40"
       >
-        <span className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold">
-          IQ
-        </span>
+        <Icon icon="solar:chart-2-bold" className="w-5 h-5" />
         Content IQ
       </button>
     </>

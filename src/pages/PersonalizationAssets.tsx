@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, BarChart3 } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 import { AddAssetDialog } from "@/components/assets/AddAssetDialog";
 import { AssetCard } from "@/components/assets/AssetCard";
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export interface Asset {
   id: string;
@@ -216,134 +217,322 @@ const PersonalizationAssets = () => {
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
   };
 
+  // Group assets by type for the sidebar
+  const assetsByType = assets.reduce((acc, asset) => {
+    const type = asset.type;
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(asset);
+    return acc;
+  }, {} as Record<string, Asset[]>);
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "pdf": return "solar:document-text-bold";
+      case "doc":
+      case "docx": return "solar:document-bold";
+      case "ppt":
+      case "pptx": return "solar:presentation-graph-bold";
+      case "txt": return "solar:notes-bold";
+      default: return "solar:file-bold";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "pdf": return "text-red-500 bg-red-500/10";
+      case "doc":
+      case "docx": return "text-blue-500 bg-blue-500/10";
+      case "ppt":
+      case "pptx": return "text-amber-500 bg-amber-500/10";
+      case "txt": return "text-slate-500 bg-slate-500/10";
+      default: return "text-muted-foreground bg-muted";
+    }
+  };
+
   return (
-    <div className="min-h-full">
-      {/* Header with Gradient Band */}
-      <section className="relative bg-gradient-hero px-6 py-6">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2 leading-tight">
-                Content HQ
-              </h1>
-              <p className="text-sm text-white/80">
-                Your centralized content library powering AI personalization
-              </p>
+    <div className="min-h-full bg-background">
+      {/* Header Section */}
+      <div className="border-b border-border bg-card px-6 py-5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Icon icon="solar:layers-bold" className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">Content HQ</h1>
+                <p className="text-sm text-muted-foreground">
+                  Your centralized content library powering AI personalization
+                </p>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Button asChild variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-                <Link to="/content-iq">
-                  <BarChart3 className="mr-2 h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/content-iq" className="gap-2">
+                  <Icon icon="solar:chart-2-linear" className="h-4 w-4" />
                   Content IQ
                 </Link>
               </Button>
-              <Button onClick={() => setIsAddDialogOpen(true)} size="lg" variant="secondary">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                <Icon icon="solar:upload-linear" className="h-4 w-4 mr-2" />
                 Upload Assets
               </Button>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{totalCount}</div>
-              <div className="text-sm text-muted-foreground">Total Assets</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">{activeCount}</div>
-              <div className="text-sm text-muted-foreground">Active</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-gray-600">{totalCount - activeCount}</div>
-              <div className="text-sm text-muted-foreground">Inactive</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{formatTotalSize(totalSize)}</div>
-              <div className="text-sm text-muted-foreground">Total Size</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search assets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="File type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="pdf">PDF</SelectItem>
-              <SelectItem value="docx">Word</SelectItem>
-              <SelectItem value="pptx">PowerPoint</SelectItem>
-              <SelectItem value="txt">Text</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
-      {/* Assets Grid */}
-      {filteredAssets.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">
-              {searchQuery || filterType !== "all" || filterStatus !== "all" 
-                ? "No assets match your filters" 
-                : "No assets yet. Upload your first asset to get started."}
-            </p>
-            {!searchQuery && filterType === "all" && filterStatus === "all" && (
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Upload First Asset
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {filteredAssets.map((asset) => (
-            <AssetCard
-              key={asset.id}
-              asset={asset}
-              onToggleActive={toggleActive}
-              onRemove={removeAsset}
-            />
-          ))}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon icon="solar:folder-with-files-linear" className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalCount}</p>
+                  <p className="text-xs text-muted-foreground">Total Assets</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Icon icon="solar:check-circle-linear" className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeCount}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center">
+                  <Icon icon="solar:eye-closed-linear" className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{totalCount - activeCount}</p>
+                  <p className="text-xs text-muted-foreground">Inactive</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Icon icon="solar:server-linear" className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{formatTotalSize(totalSize)}</p>
+                  <p className="text-xs text-muted-foreground">Total Size</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      )}
+
+        <div className="flex gap-6 items-start">
+          {/* Sidebar - File Type Breakdown */}
+          <div className="w-64 flex-shrink-0 hidden lg:block sticky top-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Icon icon="solar:pie-chart-2-linear" className="h-4 w-4 text-primary" />
+                  By File Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {Object.entries(assetsByType).map(([type, typeAssets]) => (
+                    <button
+                      key={type}
+                      onClick={() => setFilterType(filterType === type ? "all" : type)}
+                      className={cn(
+                        "w-full flex items-center justify-between p-2 rounded-lg transition-colors",
+                        filterType === type
+                          ? "bg-primary/10 border border-primary/20"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", getTypeColor(type))}>
+                          <Icon icon={getTypeIcon(type)} className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-medium uppercase">{type}</span>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {typeAssets.length}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+
+                {filterType !== "all" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-3 text-xs text-muted-foreground"
+                    onClick={() => setFilterType("all")}
+                  >
+                    <Icon icon="solar:close-circle-linear" className="h-3.5 w-3.5 mr-1.5" />
+                    Clear filter
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="mt-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Icon icon="solar:bolt-linear" className="h-4 w-4 text-primary" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-xs"
+                  onClick={() => setIsAddDialogOpen(true)}
+                >
+                  <Icon icon="solar:upload-linear" className="h-3.5 w-3.5 mr-2" />
+                  Upload New Asset
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-xs"
+                  asChild
+                >
+                  <Link to="/content-iq">
+                    <Icon icon="solar:chart-2-linear" className="h-3.5 w-3.5 mr-2" />
+                    View Content IQ
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Search and Filters */}
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Icon icon="solar:magnifer-linear" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search assets by name or description..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <Icon icon="solar:file-linear" className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="File type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="docx">Word</SelectItem>
+                      <SelectItem value="pptx">PowerPoint</SelectItem>
+                      <SelectItem value="txt">Text</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <Icon icon="solar:filter-linear" className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Results Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-medium text-foreground">{filteredAssets.length}</span> of {totalCount} assets
+                </p>
+                {(searchQuery || filterType !== "all" || filterStatus !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterType("all");
+                      setFilterStatus("all");
+                    }}
+                  >
+                    <Icon icon="solar:close-circle-linear" className="h-3.5 w-3.5 mr-1" />
+                    Clear all
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Assets Grid */}
+            {filteredAssets.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                    <Icon icon="solar:folder-open-linear" className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {searchQuery || filterType !== "all" || filterStatus !== "all"
+                      ? "No matching assets"
+                      : "No assets yet"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
+                    {searchQuery || filterType !== "all" || filterStatus !== "all"
+                      ? "Try adjusting your filters or search query"
+                      : "Upload your first asset to start building your AI knowledge base"}
+                  </p>
+                  {!searchQuery && filterType === "all" && filterStatus === "all" && (
+                    <Button onClick={() => setIsAddDialogOpen(true)}>
+                      <Icon icon="solar:upload-linear" className="h-4 w-4 mr-2" />
+                      Upload First Asset
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredAssets.map((asset) => (
+                  <AssetCard
+                    key={asset.id}
+                    asset={asset}
+                    onToggleActive={toggleActive}
+                    onRemove={removeAsset}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       <AddAssetDialog
         open={isAddDialogOpen}

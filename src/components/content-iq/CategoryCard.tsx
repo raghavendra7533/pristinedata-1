@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CategoryCardProps {
@@ -7,13 +7,13 @@ interface CategoryCardProps {
   score: number;
   maxScore: number;
   note: string;
-  icon: LucideIcon;
+  icon: string;
   tooltip?: string;
 }
 
-export const CategoryCard = ({ title, score, maxScore, note, icon: Icon, tooltip }: CategoryCardProps) => {
+export const CategoryCard = ({ title, score, maxScore, note, icon, tooltip }: CategoryCardProps) => {
   const segments = Array.from({ length: maxScore }, (_, i) => i + 1);
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -23,7 +23,7 @@ export const CategoryCard = ({ title, score, maxScore, note, icon: Icon, tooltip
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
-                    <Icon className="w-5 h-5 text-primary" />
+                    <Icon icon={icon} className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground">{title}</h3>
                 </div>

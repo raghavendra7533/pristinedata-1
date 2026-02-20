@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Zap, Clock, Building2, User, ArrowRight, Filter } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 // Mock data based on the screenshot reference
 const mockOpportunities = [
@@ -56,16 +57,16 @@ const mockOpportunities = [
 ];
 
 const statusColors = {
-  Active: "bg-green-500/10 text-green-700 dark:text-green-400",
-  "On Hold": "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-  Closed: "bg-gray-500/10 text-gray-700 dark:text-gray-400"
+  Active: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+  "On Hold": "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
+  Closed: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
 };
 
 const stageColors = {
   Discovery: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  Evaluation: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
-  Proposal: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
-  Negotiation: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20"
+  Evaluation: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20",
+  Proposal: "bg-primary/10 text-primary border-primary/20",
+  Negotiation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
 };
 
 export default function Opportunities() {
@@ -87,121 +88,194 @@ export default function Opportunities() {
     return matchesSearch && matchesTab;
   });
 
+  const activeCount = mockOpportunities.filter(o => o.status === "Active").length;
+  const onHoldCount = mockOpportunities.filter(o => o.status === "On Hold").length;
+
   return (
-    <div className="min-h-full">
-      {/* Header with Gradient Band */}
-      <section className="relative bg-gradient-hero px-6 py-6">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-white mb-1">Opportunity Playbooks</h1>
-              <p className="text-white/80 text-sm">
-                Track and manage your active deal opportunities
-              </p>
+    <div className="min-h-full bg-background">
+      {/* Header Section */}
+      <div className="border-b border-border bg-card px-6 py-5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <Icon icon="solar:bolt-bold" className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">Opportunity Playbook</h1>
+                <p className="text-sm text-muted-foreground">
+                  Track and manage your active deal opportunities
+                </p>
+              </div>
             </div>
-            <Button 
-              size="lg"
-              className="bg-white text-primary hover:bg-white/90"
-              onClick={() => navigate("/search")}
-            >
-              <Zap className="h-4 w-4 mr-2" />
+            <Button size="sm" onClick={() => navigate("/search")}>
+              <Icon icon="solar:bolt-linear" className="h-4 w-4 mr-2" />
               Create New Playbook
             </Button>
           </div>
         </div>
-      </section>
-
-      {/* Search and Filter Bar */}
-      <section className="bg-background border-b px-6 py-4">
-        <div className="max-w-7xl mx-auto flex gap-4 items-center">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search opportunities..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-        </div>
-      </section>
+      </div>
 
       {/* Main Content */}
-      <section className="px-6 py-8 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon icon="solar:folder-with-files-linear" className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{mockOpportunities.length}</p>
+                  <p className="text-xs text-muted-foreground">Total Playbooks</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Icon icon="solar:play-circle-linear" className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeCount}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Icon icon="solar:pause-circle-linear" className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{onHoldCount}</p>
+                  <p className="text-xs text-muted-foreground">On Hold</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Icon icon="solar:chart-2-linear" className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">75%</p>
+                  <p className="text-xs text-muted-foreground">Win Rate</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Icon icon="solar:magnifer-linear" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, company, or title..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline" size="default">
+                <Icon icon="solar:filter-linear" className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>
-            <TabsTrigger value="all">
+            <TabsTrigger value="all" className="gap-2">
+              <Icon icon="solar:list-linear" className="h-4 w-4" />
               All ({mockOpportunities.length})
             </TabsTrigger>
-            <TabsTrigger value="active">
-              Active ({mockOpportunities.filter(o => o.status === "Active").length})
+            <TabsTrigger value="active" className="gap-2">
+              <Icon icon="solar:play-circle-linear" className="h-4 w-4" />
+              Active ({activeCount})
             </TabsTrigger>
-            <TabsTrigger value="on-hold">
-              On Hold ({mockOpportunities.filter(o => o.status === "On Hold").length})
+            <TabsTrigger value="on-hold" className="gap-2">
+              <Icon icon="solar:pause-circle-linear" className="h-4 w-4" />
+              On Hold ({onHoldCount})
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        <div className="grid grid-cols-1 gap-4">
+        {/* Opportunity Cards */}
+        <div className="space-y-3">
           {filteredOpportunities.map((opp) => (
-            <Card 
-              key={opp.id} 
-              className="group hover:shadow-primary transition-all duration-300 cursor-pointer"
+            <Card
+              key={opp.id}
+              className="group hover:border-border/80 transition-all cursor-pointer"
               onClick={() => navigate(`/contact/profile?email=${opp.email}&tab=opportunity`)}
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-6">
-                  {/* Left: Contact Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-4 mb-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                        {opp.contactName.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold truncate">{opp.contactName}</h3>
-                          <Badge className={statusColors[opp.status as keyof typeof statusColors]}>
-                            {opp.status}
-                          </Badge>
-                        </div>
-                        <p className="text-muted-foreground text-sm truncate">{opp.contactTitle}</p>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {opp.company}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {opp.lastUpdated}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-16">{opp.summary}</p>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  {/* Avatar */}
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                    {opp.contactName.split(' ').map(n => n[0]).join('')}
                   </div>
 
-                  {/* Right: Stage and Action */}
-                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                    <Badge 
-                      variant="outline" 
-                      className={`${stageColors[opp.stage as keyof typeof stageColors]}`}
-                    >
-                      {opp.stage}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="group-hover:bg-muted"
-                    >
-                      View Playbook
-                      <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-sm">{opp.contactName}</h3>
+                          <Badge
+                            variant="secondary"
+                            className={cn("text-[10px] uppercase font-bold tracking-wide border", statusColors[opp.status as keyof typeof statusColors])}
+                          >
+                            {opp.status}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={cn("text-[10px] uppercase font-medium", stageColors[opp.stage as keyof typeof stageColors])}
+                          >
+                            {opp.stage}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{opp.contactTitle}</p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                          View Playbook
+                          <Icon icon="solar:arrow-right-up-linear" className="h-3.5 w-3.5 ml-1.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Icon icon="solar:buildings-2-linear" className="h-3.5 w-3.5" />
+                        {opp.company}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Icon icon="solar:clock-circle-linear" className="h-3.5 w-3.5" />
+                        {opp.lastUpdated}
+                      </span>
+                    </div>
+
+                    {/* Summary */}
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-1">{opp.summary}</p>
                   </div>
                 </div>
               </CardContent>
@@ -209,22 +283,25 @@ export default function Opportunities() {
           ))}
         </div>
 
+        {/* Empty State */}
         {filteredOpportunities.length === 0 && (
-          <Card className="p-12">
-            <div className="text-center">
-              <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <Icon icon="solar:bolt-linear" className="h-8 w-8 text-muted-foreground" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">No opportunities found</h3>
-              <p className="text-muted-foreground mb-6">
-                {searchQuery ? "Try adjusting your search" : "Start by creating your first opportunity playbook"}
+              <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
+                {searchQuery ? "Try adjusting your search query" : "Start by creating your first opportunity playbook"}
               </p>
               <Button onClick={() => navigate("/search")}>
-                <Zap className="h-4 w-4 mr-2" />
+                <Icon icon="solar:bolt-linear" className="h-4 w-4 mr-2" />
                 Create Opportunity Playbook
               </Button>
-            </div>
+            </CardContent>
           </Card>
         )}
-      </section>
+      </div>
     </div>
   );
 }

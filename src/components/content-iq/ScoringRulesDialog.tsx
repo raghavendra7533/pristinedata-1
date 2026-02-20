@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { BarChart3, FileCheck, Target, FileText, BookOpen, Info } from "lucide-react";
+import { Icon } from "@iconify/react";
 
 interface ScoringRulesDialogProps {
   open: boolean;
@@ -16,7 +16,7 @@ interface ScoringRulesDialogProps {
 const categories = [
   {
     name: "Quantity",
-    icon: BarChart3,
+    icon: "solar:chart-2-bold",
     description: "Measures the breadth and volume of your content library",
     criteria: [
       "Number of core assets (decks, one-pagers, data sheets)",
@@ -27,7 +27,7 @@ const categories = [
   },
   {
     name: "Quality",
-    icon: FileCheck,
+    icon: "solar:verified-check-bold",
     description: "Evaluates content clarity, depth, and effectiveness",
     criteria: [
       "Clarity of value propositions",
@@ -38,7 +38,7 @@ const categories = [
   },
   {
     name: "Competitive Intelligence",
-    icon: Target,
+    icon: "solar:target-bold",
     description: "Assesses competitive positioning materials",
     criteria: [
       "Competitor comparison grids",
@@ -49,7 +49,7 @@ const categories = [
   },
   {
     name: "Pitch Materials",
-    icon: FileText,
+    icon: "solar:presentation-graph-bold",
     description: "Reviews sales presentation assets",
     criteria: [
       "Discovery and demo deck quality",
@@ -60,7 +60,7 @@ const categories = [
   },
   {
     name: "Playbook Support",
-    icon: BookOpen,
+    icon: "solar:notebook-bold",
     description: "Checks enablement and process documentation",
     criteria: [
       "Discovery question banks",
@@ -88,7 +88,7 @@ export const ScoringRulesDialog = ({ open, onOpenChange }: ScoringRulesDialogPro
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <Info className="w-5 h-5 text-primary" />
+                  <Icon icon="solar:info-circle-bold" className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Overall Health Score</h3>
@@ -119,35 +119,32 @@ export const ScoringRulesDialog = ({ open, onOpenChange }: ScoringRulesDialogPro
           <div>
             <h3 className="font-semibold text-lg mb-4">Category Scoring Criteria</h3>
             <div className="space-y-4">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <Card key={category.name} className="hover:shadow-md transition-shadow">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                          <Icon className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-base">{category.name}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
-                        </div>
+              {categories.map((category) => (
+                <Card key={category.name} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                        <Icon icon={category.icon} className="w-5 h-5 text-primary" />
                       </div>
-                      <div className="ml-11">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Scoring factors:</p>
-                        <ul className="space-y-1.5">
-                          {category.criteria.map((criterion, idx) => (
-                            <li key={idx} className="text-sm flex items-start gap-2">
-                              <span className="text-primary mt-0.5">•</span>
-                              <span>{criterion}</span>
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-base">{category.name}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                    <div className="ml-11">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Scoring factors:</p>
+                      <ul className="space-y-1.5">
+                        {category.criteria.map((criterion, idx) => (
+                          <li key={idx} className="text-sm flex items-start gap-2">
+                            <span className="text-primary mt-0.5">•</span>
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 

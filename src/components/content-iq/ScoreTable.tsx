@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -26,7 +26,7 @@ export const ScoreTable = ({ scores }: ScoreTableProps) => {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Category Breakdown</CardTitle>
         <Button variant="ghost" size="sm" onClick={copyTable}>
-          <Copy className="w-4 h-4 mr-2" />
+          <Icon icon="solar:copy-linear" className="w-4 h-4 mr-2" />
           Copy
         </Button>
       </CardHeader>

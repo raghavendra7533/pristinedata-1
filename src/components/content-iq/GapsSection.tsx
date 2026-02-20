@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Icon } from "@iconify/react";
 
 interface GapsSectionProps {
   gaps: string[];
@@ -11,7 +11,7 @@ export const GapsSection = ({ gaps }: GapsSectionProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <AlertCircle className="w-5 h-5 text-amber-500" />
+          <Icon icon="solar:danger-circle-linear" className="w-5 h-5 text-amber-500" />
           Gaps & Coverage
         </CardTitle>
       </CardHeader>

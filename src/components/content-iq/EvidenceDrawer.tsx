@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -18,17 +18,16 @@ export const EvidenceDrawer = ({ files }: EvidenceDrawerProps) => {
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="w-full justify-between p-0 hover:bg-transparent">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="w-5 h-5 text-primary" />
+                <Icon icon="solar:document-text-linear" className="w-5 h-5 text-primary" />
                 Evidence & Referenced Files
                 <span className="text-sm font-normal text-muted-foreground">
                   ({files.length} files)
                 </span>
               </CardTitle>
-              {isOpen ? (
-                <ChevronUp className="w-5 h-5 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              )}
+              <Icon
+                icon={isOpen ? "solar:alt-arrow-up-linear" : "solar:alt-arrow-down-linear"}
+                className="w-5 h-5 text-muted-foreground"
+              />
             </Button>
           </CollapsibleTrigger>
         </CardHeader>
@@ -40,7 +39,7 @@ export const EvidenceDrawer = ({ files }: EvidenceDrawerProps) => {
                   key={index}
                   className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <Icon icon="solar:document-linear" className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm truncate">{file}</span>
                 </div>
               ))}

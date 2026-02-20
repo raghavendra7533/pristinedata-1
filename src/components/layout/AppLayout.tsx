@@ -121,7 +121,19 @@ export function AppLayout() {
 
   const isActive = (route: string) => {
     if (route === "/") return location.pathname === "/";
-    return location.pathname === route || location.pathname.startsWith(route + "/");
+    // Exact match check - prevents /campaigns from matching /campaigns/create
+    if (location.pathname === route) return true;
+    // For sub-routes, only match if it's a true child path (not a sibling like /campaigns/create vs /campaigns)
+    // Check that it's not another defined route that happens to start with this path
+    if (location.pathname.startsWith(route + "/")) {
+      // Don't match /campaigns for /campaigns/create since they're siblings in nav
+      const defined = ["/campaigns", "/campaigns/create"];
+      const isDefinedSibling = defined.some(
+        (r) => r !== route && location.pathname.startsWith(r)
+      );
+      return !isDefinedSibling;
+    }
+    return false;
   };
 
   const isParentActive = (item: NavItem) => {
