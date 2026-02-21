@@ -29,6 +29,8 @@ import ChromeExtension from "./pages/ChromeExtension";
 import SCWorkspace from "./pages/SCWorkspace";
 import ContentIQ from "./pages/ContentIQ";
 import SalesOpenersMockup from "./pages/SalesOpenersMockup";
+import Lists from "./pages/Lists";
+import EnrichLeads from "./pages/EnrichLeads";
 
 const queryClient = new QueryClient();
 
@@ -53,7 +55,8 @@ const App = () => (
             <Route path="/results/contacts" element={<Results />} />
             <Route path="/contact/profile" element={<ContactProfile />} />
             {/* Placeholder routes for menu items */}
-            <Route path="/lists" element={<Dashboard />} />
+            <Route path="/lists" element={<Lists />} />
+            <Route path="/enrich-leads" element={<EnrichLeads />} />
             <Route path="/campaigns" element={<CampaignDashboard />} />
             <Route path="/campaigns/create" element={<CreateCampaign />} />
             <Route path="/campaigns/:id/analytics" element={<CampaignAnalytics />} />

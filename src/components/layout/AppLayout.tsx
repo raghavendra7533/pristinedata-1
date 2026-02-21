@@ -34,7 +34,7 @@ const sidebarSections: SidebarSection[] = [
         children: [
           { label: "Lead Search", route: "/search", icon: "solar:magnifer-linear" },
           { label: "Lists", route: "/lists", icon: "solar:documents-linear" },
-          { label: "Enrich Leads", route: "/upload", icon: "solar:upload-linear" },
+          { label: "Enrich Leads", route: "/enrich-leads", icon: "solar:magic-stick-3-linear" },
         ],
       },
       {
@@ -153,7 +153,7 @@ export function AppLayout() {
     if (location.pathname.startsWith("/integrations")) return "Integrations";
     if (location.pathname.startsWith("/personalization")) return "Content HQ";
     if (location.pathname.startsWith("/account-search")) return "Account Intelligence";
-    if (location.pathname.startsWith("/upload")) return "Enrich Leads";
+    if (location.pathname.startsWith("/enrich-leads")) return "Enrich Leads";
     if (location.pathname.startsWith("/signals")) return "Buying Signals";
     return "";
   };
