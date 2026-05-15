@@ -52,6 +52,7 @@ const sidebarSections: SidebarSection[] = [
         activeIcon: "solar:lightbulb-bold",
         label: "Sales Intelligence",
         children: [
+          { label: "Sales Dashboard", route: "/sales-dashboard", icon: "solar:chart-square-linear" },
           { label: "Opportunity Playbook", route: "/opportunities", icon: "solar:bolt-linear" },
           { label: "Account Intelligence", route: "/account-search", icon: "solar:graph-up-linear" },
           { label: "Buying Signals", route: "/signals", icon: "solar:radar-linear" },
@@ -155,6 +156,7 @@ export function AppLayout() {
     if (location.pathname.startsWith("/account-search")) return "Account Intelligence";
     if (location.pathname.startsWith("/enrich-leads")) return "Enrich Leads";
     if (location.pathname.startsWith("/signals")) return "Buying Signals";
+    if (location.pathname.startsWith("/sales-dashboard")) return "Sales Intelligence";
     return "";
   };
 
@@ -264,6 +266,20 @@ export function AppLayout() {
             <Icon icon="solar:settings-linear" className="h-4 w-4" />
           </button>
         </div>
+        {import.meta.env.DEV && (
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => {
+                localStorage.removeItem("pristine_onboarding");
+                localStorage.removeItem("pristine_onboarded");
+                navigate("/onboarding");
+              }}
+              className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1.5 px-2 rounded border border-border hover:border-destructive/50 text-center"
+            >
+              Reset onboarding
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Right side */}

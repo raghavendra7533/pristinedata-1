@@ -37,6 +37,8 @@ import AdminCampaignCalendar from "./pages/AdminCampaignCalendar";
 import AdminCapacityPlanner from "./pages/AdminCapacityPlanner";
 import ClientCapacityPlanner from "./pages/ClientCapacityPlanner";
 import AccountPlaybook from "./pages/AccountPlaybook";
+import Onboarding from "./pages/Onboarding";
+import SalesDashboard from "./pages/SalesDashboard";
 
 const queryClient = new QueryClient();
 
@@ -83,9 +85,11 @@ const App = () => (
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/admin-capacity" element={<AdminCapacityPlanner />} />
             <Route path="/admin-capacity/:clientId" element={<ClientCapacityPlanner />} />
+            <Route path="/sales-dashboard" element={<SalesDashboard />} />
           </Route>
           {/* Standalone admin routes — no AppLayout wrapper */}
           <Route path="/admin/campaign-calendar" element={<AdminCampaignCalendar />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
