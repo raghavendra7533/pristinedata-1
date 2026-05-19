@@ -8,7 +8,7 @@ export function ICPSummaryPanel() {
   const isEmpty = !icp || icp.industries.length === 0;
 
   return (
-    <div className="rounded-lg border bg-white p-4" style={{ borderColor: "var(--si-card-border)" }}>
+    <div className="rounded-lg border p-4" style={{ borderColor: "var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Your ICP</span>
         <button

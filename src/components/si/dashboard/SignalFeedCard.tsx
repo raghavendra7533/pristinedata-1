@@ -41,8 +41,8 @@ export function SignalFeedCard({
 
   return (
     <div
-      className="rounded-lg border bg-white px-4 py-3.5 flex items-center gap-4 hover:shadow-sm transition-shadow"
-      style={{ borderColor: "var(--si-card-border)" }}
+      className="rounded-lg border px-4 py-3.5 flex items-center gap-4 hover:shadow-sm transition-shadow"
+      style={{ borderColor: "var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
     >
       {/* Avatar */}
       <div

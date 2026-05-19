@@ -14,8 +14,8 @@ export function SummaryCard({ label, value, delta, deltaLabel, icon, iconColor =
 
   return (
     <div
-      className="rounded-lg border bg-white p-4 flex items-start justify-between"
-      style={{ borderColor: "var(--si-card-border)", boxShadow: "var(--si-card-shadow)" }}
+      className="rounded-lg border p-4 flex items-start justify-between"
+      style={{ borderColor: "var(--si-card-border)", boxShadow: "var(--si-card-shadow)", backgroundColor: "var(--si-card-bg)" }}
     >
       <div className="flex flex-col gap-1">
         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>

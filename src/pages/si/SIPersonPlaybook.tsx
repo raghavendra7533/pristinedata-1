@@ -65,7 +65,7 @@ export default function SIPersonPlaybook() {
   return (
     <div className="flex h-full">
       {/* Left Panel */}
-      <aside className="w-72 shrink-0 bg-white border-r border-[--si-card-border] overflow-y-auto p-6">
+      <aside className="w-72 shrink-0 border-r border-[--si-card-border] overflow-y-auto p-6" style={{ backgroundColor: "var(--si-card-bg)" }}>
         {/* Avatar */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xl font-bold mb-3">
@@ -147,7 +147,7 @@ export default function SIPersonPlaybook() {
 
         <div className="space-y-5 max-w-3xl">
           {/* Why reach out now */}
-          <section className="bg-white rounded-xl border border-[--si-card-border] shadow-sm p-5">
+          <section className="rounded-xl border border-[--si-card-border] shadow-sm p-5" style={{ backgroundColor: "var(--si-card-bg)" }}>
             <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Icon icon="solar:bolt-linear" className="h-4 w-4 text-amber-500" />
               Why reach out now
@@ -163,7 +163,7 @@ export default function SIPersonPlaybook() {
           </section>
 
           {/* Personalized talking points */}
-          <section className="bg-white rounded-xl border border-[--si-card-border] shadow-sm p-5">
+          <section className="rounded-xl border border-[--si-card-border] shadow-sm p-5" style={{ backgroundColor: "var(--si-card-bg)" }}>
             <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Icon icon="solar:chat-round-dots-linear" className="h-4 w-4 text-indigo-500" />
               Personalized talking points
@@ -179,7 +179,7 @@ export default function SIPersonPlaybook() {
           </section>
 
           {/* Suggested outreach */}
-          <section className="bg-white rounded-xl border border-[--si-card-border] shadow-sm p-5">
+          <section className="rounded-xl border border-[--si-card-border] shadow-sm p-5" style={{ backgroundColor: "var(--si-card-bg)" }}>
             <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Icon icon="solar:letter-linear" className="h-4 w-4 text-green-500" />
               Suggested outreach

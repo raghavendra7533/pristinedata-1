@@ -344,3 +344,33 @@ All colors MUST be HSL.
   --si-radius-button: 6px;
   --si-radius-badge: 4px;
 }
+
+.dark [data-theme="si"] {
+  --si-sidebar-bg: #111827;
+  --si-sidebar-border: #1F2937;
+  --si-sidebar-text: #9CA3AF;
+  --si-sidebar-text-hover: #F9FAFB;
+  --si-sidebar-active-bg: #1E1B4B;
+  --si-sidebar-active-text: #A5B4FC;
+  --si-sidebar-section-label: #4B5563;
+
+  --si-bg: #0F172A;
+  --si-card-bg: #1E2433;
+  --si-card-border: #2D3748;
+  --si-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  --si-primary: #6366F1;
+  --si-primary-hover: #818CF8;
+  --si-primary-text: #FFFFFF;
+
+  --si-text-primary: #F9FAFB;
+  --si-text-secondary: #D1D5DB;
+  --si-text-muted: #6B7280;
+
+  --si-signal-funding: #FCD34D;
+  --si-signal-hiring: #60A5FA;
+  --si-signal-intent: #A78BFA;
+  --si-signal-tech: #34D399;
+  --si-signal-leadership: #F472B6;
+  --si-signal-expansion: #FB923C;
+}

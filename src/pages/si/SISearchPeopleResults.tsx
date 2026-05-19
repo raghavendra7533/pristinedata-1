@@ -55,7 +55,8 @@ export default function SISearchPeopleResults() {
           <button
             key={person.id}
             onClick={() => navigate(`/si/playbook/person/${person.id}`)}
-            className="w-full text-left bg-white rounded-xl border border-[--si-card-border] shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-4"
+            className="w-full text-left rounded-xl border border-[--si-card-border] shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-4"
+            style={{ backgroundColor: "var(--si-card-bg)" }}
           >
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">

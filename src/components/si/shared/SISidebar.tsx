@@ -1,6 +1,8 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { useState } from "react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
+import logo from "@/assets/pristine-data-logo.svg";
 
 const NAV_SECTIONS = [
   {
@@ -16,7 +18,7 @@ const NAV_SECTIONS = [
   {
     label: "SETTINGS",
     items: [
-      { label: "MCP Setup", route: "/si/mcp", icon: "solar:settings-linear", activeIcon: "solar:settings-bold" },
+      { label: "Settings", route: "/si/mcp", icon: "solar:settings-linear", activeIcon: "solar:settings-bold" },
     ],
   },
 ];
@@ -25,6 +27,19 @@ export function SISidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const profile = useUserProfileStore((s) => s.profile);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem("theme") === "dark");
+
+  function toggleDark() {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }
   const name = profile?.name ?? "";
   const email = profile?.email ?? "";
 
@@ -44,14 +59,8 @@ export function SISidebar() {
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b" style={{ borderColor: "var(--si-sidebar-border)" }}>
-        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
-          <Icon icon="solar:radar-bold" className="text-white" width={14} />
-        </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-sm font-semibold text-gray-900 tracking-tight">Pristine</span>
-          <span className="text-[10px] text-indigo-500 font-medium tracking-wide">SALES INTELLIGENCE</span>
-        </div>
+      <div className="flex items-center px-4 py-4 border-b" style={{ borderColor: "var(--si-sidebar-border)" }}>
+        <img src={logo} alt="Pristine Data" className="h-6 w-auto" />
       </div>
 
       {/* Nav sections */}
@@ -100,6 +109,19 @@ export function SISidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Dark mode toggle */}
+      <div className="px-3 py-2">
+        <button
+          onClick={toggleDark}
+          className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors hover:bg-white/10"
+          style={{ color: "var(--si-sidebar-text)" }}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <Icon icon={isDark ? "solar:sun-linear" : "solar:moon-linear"} width={15} className="flex-shrink-0" />
+          {isDark ? "Light mode" : "Dark mode"}
+        </button>
+      </div>
 
       {/* Bottom: user + sign out */}
       <div className="border-t px-2 py-3" style={{ borderColor: "var(--si-sidebar-border)" }}>

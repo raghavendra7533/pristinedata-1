@@ -39,7 +39,8 @@ export default function SISearchCompanyResults() {
         {MOCK_COMPANIES.map((company) => (
           <div
             key={company.id}
-            className="bg-white rounded-xl border border-[--si-card-border] shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-4"
+            className="rounded-xl border border-[--si-card-border] shadow-sm hover:shadow-md transition-shadow p-4 flex items-center gap-4"
+            style={{ backgroundColor: "var(--si-card-bg)" }}
           >
             {/* Favicon + Name */}
             <div className="flex-1 min-w-0">

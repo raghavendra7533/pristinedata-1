@@ -29,11 +29,13 @@ export function AccountWatchCard({ account, onViewPlaybook }: AccountWatchCardPr
 
   return (
     <div
-      className="rounded-[12px] bg-white flex"
+      className="rounded-[12px] flex"
+
       style={{
         border: "1px solid var(--si-card-border)",
         borderLeft: `3px solid ${topSignalColor}`,
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+        backgroundColor: "var(--si-card-bg)",
       }}
     >
       {/* Content */}
