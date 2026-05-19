@@ -2,8 +2,22 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
+import { SILayout } from "./components/si/SILayout";
+import SIDashboard from "./pages/si/SIDashboard";
+import SIICPDiscovery from "./pages/si/SIICPDiscovery";
+import SIWatchlist from "./pages/si/SIWatchlist";
+import SISearch from "./pages/si/SISearch";
+import SIPlaybook from "./pages/si/SIPlaybook";
+import SISearchPeopleResults from "./pages/si/SISearchPeopleResults";
+import SISearchCompanyResults from "./pages/si/SISearchCompanyResults";
+import SIPersonPlaybook from "./pages/si/SIPersonPlaybook";
+import SIMcp from "./pages/si/SIMcp";
+import SIOnboarding from "./pages/si/SIOnboarding";
+import SILanding from "./pages/si/SILanding";
+import SISignUp from "./pages/si/SISignUp";
+import SISignIn from "./pages/si/SISignIn";
 import Dashboard from "./pages/Dashboard";
 import TalentDashboard from "./pages/TalentDashboard";
 import Search from "./pages/Search";
@@ -90,6 +104,24 @@ const App = () => (
           {/* Standalone admin routes — no AppLayout wrapper */}
           <Route path="/admin/campaign-calendar" element={<AdminCampaignCalendar />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          {/* SI Product Routes */}
+          <Route path="/si/onboarding" element={<SIOnboarding />} />
+          <Route path="/landing" element={<SILanding />} />
+          <Route path="/sign-up" element={<SISignUp />} />
+          <Route path="/sign-in" element={<SISignIn />} />
+          <Route element={<SILayout />}>
+            <Route path="/si" element={<Navigate to="/si/dashboard" replace />} />
+            <Route path="/si/dashboard" element={<SIDashboard />} />
+            <Route path="/si/search" element={<SISearch />} />
+            <Route path="/si/search/results/people" element={<SISearchPeopleResults />} />
+            <Route path="/si/search/results/companies" element={<SISearchCompanyResults />} />
+            <Route path="/si/icp" element={<SIICPDiscovery />} />
+            <Route path="/si/watchlist" element={<SIWatchlist />} />
+            <Route path="/si/playbook/person/:personId" element={<SIPersonPlaybook />} />
+            <Route path="/si/playbook/:accountId" element={<SIPlaybook />} />
+            <Route path="/si/playbook" element={<SIPlaybook />} />
+            <Route path="/si/mcp" element={<SIMcp />} />
+          </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -309,3 +309,38 @@ All colors MUST be HSL.
 .email-editor-content li {
   margin: 0.1em 0;
 }
+
+/* ─── Sales Intelligence Design System ─────────────────────────────────── */
+[data-theme="si"] {
+  --si-sidebar-bg: #FFFFFF;
+  --si-sidebar-border: #E8E8EC;
+  --si-sidebar-text: #4B5563;
+  --si-sidebar-text-hover: #111827;
+  --si-sidebar-active-bg: #EEF2FF;
+  --si-sidebar-active-text: #4338CA;
+  --si-sidebar-section-label: #9CA3AF;
+
+  --si-bg: #F4F5F7;
+  --si-card-bg: #FFFFFF;
+  --si-card-border: #E5E7EB;
+  --si-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --si-primary: #6366F1;
+  --si-primary-hover: #4F46E5;
+  --si-primary-text: #FFFFFF;
+
+  --si-text-primary: #111827;
+  --si-text-secondary: #4B5563;
+  --si-text-muted: #9CA3AF;
+
+  --si-signal-funding: #D97706;
+  --si-signal-hiring: #2563EB;
+  --si-signal-intent: #7C3AED;
+  --si-signal-tech: #059669;
+  --si-signal-leadership: #DB2777;
+  --si-signal-expansion: #EA580C;
+
+  --si-radius-card: 8px;
+  --si-radius-button: 6px;
+  --si-radius-badge: 4px;
+}
