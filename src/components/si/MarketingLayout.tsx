@@ -1,0 +1,25 @@
+import { NavLink } from "react-router-dom";
+import { Icon } from "@iconify/react";
+
+export function MarketingLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Fixed top nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#E5E7EB] h-14 flex items-center justify-between px-6">
+        <div className="flex items-center gap-2">
+          <Icon icon="solar:radar-bold" className="text-[#6366F1]" width={22} height={22} />
+          <span className="text-sm font-semibold text-[#0F0F0F]">Pristine SI</span>
+        </div>
+        <NavLink
+          to="/sign-in"
+          className="text-sm font-medium text-[#6B7280] hover:text-[#0F0F0F] transition-colors"
+        >
+          Sign in
+        </NavLink>
+      </nav>
+
+      {/* Content below fixed nav */}
+      <div className="pt-14">{children}</div>
+    </div>
+  );
+}
