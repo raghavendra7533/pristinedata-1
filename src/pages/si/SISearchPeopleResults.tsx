@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { useUserProfileStore } from "@/lib/si/userProfileStore";
 
 const MOCK_PEOPLE = [
   { id: "p-001", name: "Marcus Chen", title: "VP of Sales Engineering", company: "Gong", domain: "gong.io", location: "San Francisco, CA", seniority: "VP", intent: "Hot" as const, signals: 3 },
@@ -26,6 +27,8 @@ export default function SISearchPeopleResults() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get("q") || "";
+  const profile = useUserProfileStore((s) => s.profile);
+  const isSdr = /sdr|bdr|business.?development|outbound/i.test(profile?.role ?? "");
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -83,10 +86,17 @@ export default function SISearchPeopleResults() {
               <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
                 {person.signals} signals
               </span>
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700">
-                View Opp Playbook
-                <Icon icon="solar:arrow-right-linear" className="h-3.5 w-3.5" />
-              </span>
+              {isSdr ? (
+                <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5]">
+                  View Outreach Playbook
+                  <Icon icon="solar:arrow-right-linear" className="h-3.5 w-3.5" />
+                </span>
+              ) : (
+                <span className="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                  View Opp Playbook
+                  <Icon icon="solar:arrow-right-linear" className="h-3.5 w-3.5" />
+                </span>
+              )}
             </div>
           </button>
         ))}
