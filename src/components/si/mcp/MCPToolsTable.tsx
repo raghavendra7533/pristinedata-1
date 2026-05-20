@@ -9,7 +9,7 @@ export default function MCPToolsTable() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[--si-card-border] bg-gray-50/60">
+            <tr className="border-b border-[--si-card-border]" style={{ backgroundColor: "var(--si-card-border)" }}>
               <th className="text-left px-4 py-2.5 font-medium text-[--si-text-secondary] whitespace-nowrap">Tool Name</th>
               <th className="text-left px-4 py-2.5 font-medium text-[--si-text-secondary]">Description</th>
               <th className="text-left px-4 py-2.5 font-medium text-[--si-text-secondary] whitespace-nowrap">Parameters</th>

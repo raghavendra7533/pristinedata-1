@@ -60,7 +60,7 @@ export default function SIDashboard() {
   return (
     <div className="flex flex-col min-h-full">
       {/* Top header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between">
+      <div className="sticky top-0 z-10 border-b px-6 py-3.5 flex items-center justify-between" style={{ backgroundColor: "var(--si-card-bg)", borderColor: "var(--si-card-border)" }}>
         <div>
           <h1 className="text-base font-semibold text-gray-900">{greeting}{name ? `, ${name.split(" ")[0]}` : ""}</h1>
           <p className="text-xs text-gray-400 mt-0.5">{today}</p>
@@ -120,7 +120,7 @@ export default function SIDashboard() {
                   placeholder="Search accounts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-indigo-400 w-44 bg-white"
+                  className="pl-7 pr-3 py-1.5 text-xs border border-[--si-card-border] rounded-md focus:outline-none focus:border-indigo-400 w-44 bg-transparent text-[--si-text-primary]"
                 />
               </div>
 
@@ -128,8 +128,8 @@ export default function SIDashboard() {
               <div className="relative">
                 <button
                   onClick={() => setFilterDropdownOpen((o) => !o)}
-                  className="flex items-center gap-1.5 text-xs font-medium border border-gray-200 rounded-md px-3 py-1.5 bg-white hover:bg-gray-50 transition-colors"
-                  style={signalFilter !== "all" ? { borderColor: "var(--si-primary)", color: "var(--si-primary)" } : { color: "#4B5563" }}
+                  className="flex items-center gap-1.5 text-xs font-medium border border-[--si-card-border] rounded-md px-3 py-1.5 hover:bg-white/5 transition-colors"
+                  style={signalFilter !== "all" ? { borderColor: "var(--si-primary)", color: "var(--si-primary)", backgroundColor: "var(--si-card-bg)" } : { color: "#4B5563", backgroundColor: "var(--si-card-bg)" }}
                 >
                   <Icon icon="solar:filter-linear" width={13} />
                   {signalFilter === "all" ? "Signal type" : SIGNAL_TYPES[signalFilter].label}
@@ -141,10 +141,10 @@ export default function SIDashboard() {
                     {/* Backdrop */}
                     <div className="fixed inset-0 z-10" onClick={() => setFilterDropdownOpen(false)} />
                     {/* Dropdown */}
-                    <div className="absolute left-0 top-full mt-1.5 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                    <div className="absolute left-0 top-full mt-1.5 z-20 border border-[--si-card-border] rounded-lg shadow-lg py-1 min-w-[160px]" style={{ backgroundColor: "var(--si-card-bg)" }}>
                       <button
                         onClick={() => { setSignalFilter("all"); setFilterDropdownOpen(false); }}
-                        className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors ${signalFilter === "all" ? "text-indigo-600" : "text-gray-700"}`}
+                        className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-white/5 transition-colors ${signalFilter === "all" ? "text-indigo-600" : "text-[--si-text-secondary]"}`}
                       >
                         {signalFilter === "all" && <Icon icon="solar:check-circle-bold" width={13} className="text-indigo-600" />}
                         <span className={signalFilter !== "all" ? "ml-[17px]" : ""}>All signals</span>
@@ -154,7 +154,7 @@ export default function SIDashboard() {
                         <button
                           key={type}
                           onClick={() => { setSignalFilter(type); setFilterDropdownOpen(false); }}
-                          className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors ${signalFilter === type ? "text-indigo-600" : "text-gray-700"}`}
+                          className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-white/5 transition-colors ${signalFilter === type ? "text-indigo-600" : "text-[--si-text-secondary]"}`}
                         >
                           {signalFilter === type
                             ? <Icon icon="solar:check-circle-bold" width={13} className="text-indigo-600" />
@@ -181,7 +181,7 @@ export default function SIDashboard() {
 
             {/* Signal list */}
             {sortedSignals.length === 0 ? (
-              <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+              <div className="rounded-lg border border-[--si-card-border] p-8 text-center" style={{ backgroundColor: "var(--si-card-bg)" }}>
                 <Icon icon="solar:radar-linear" width={32} className="text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">No signals match your filters.</p>
               </div>

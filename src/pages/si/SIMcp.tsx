@@ -107,7 +107,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
       {/* Icon */}
       <div
         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: "#F9FAFB", border: "1px solid var(--si-card-border)" }}
+        style={{ backgroundColor: "var(--si-card-border)", border: "1px solid var(--si-card-border)" }}
       >
         {integration.iconColor ? (
           <Icon icon={integration.icon} width={22} style={{ color: integration.iconColor }} />
@@ -128,8 +128,8 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           <select
             value={crmPlatform}
             onChange={(e) => setCrmPlatform(e.target.value as CrmPlatform)}
-            className="mb-2 mt-1 text-xs rounded-md border px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            style={{ borderColor: "var(--si-card-border)", color: "var(--si-text-secondary)" }}
+            className="mb-2 mt-1 text-xs rounded-md border px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            style={{ borderColor: "var(--si-card-border)", color: "var(--si-text-secondary)", backgroundColor: "var(--si-card-bg)" }}
           >
             <option value="salesforce">Salesforce</option>
             <option value="hubspot">HubSpot</option>
@@ -186,7 +186,7 @@ function CollapsibleSection({
     <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] overflow-hidden">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50/60 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
       >
         <span className="flex items-center gap-2">
           <Icon icon={icon} width={16} className="text-[--si-text-secondary]" />
@@ -288,11 +288,11 @@ export default function SIMcp() {
               className={`flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${
                 signalDelivery === key
                   ? "border-indigo-300 bg-indigo-50/60"
-                  : "hover:bg-gray-50/60"
+                  : "hover:bg-white/5"
               }`}
               style={{ borderColor: signalDelivery === key ? undefined : "var(--si-card-border)", backgroundColor: signalDelivery === key ? undefined : "var(--si-card-bg)" }}
             >
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: signalDelivery === key ? "#E0E7FF" : "#F9FAFB", border: "1px solid var(--si-card-border)" }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: signalDelivery === key ? "#E0E7FF" : "var(--si-card-border)", border: "1px solid var(--si-card-border)" }}>
                 <Icon icon={icon} width={18} style={{ color: signalDelivery === key ? "#4F46E5" : "var(--si-text-secondary)" }} />
               </div>
               <div className="flex-1 min-w-0">
@@ -327,12 +327,12 @@ export default function SIMcp() {
           <CollapsibleSection title="Claude Code Quickstart" icon="solar:code-linear">
             <p className="text-sm text-[--si-text-secondary]">
               Add the following to your{" "}
-              <code className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded border border-[--si-card-border]">
+              <code className="font-mono text-xs px-1.5 py-0.5 rounded border border-[--si-card-border]" style={{ backgroundColor: "var(--si-card-border)" }}>
                 ~/.claude/claude_code_config.json
               </code>
               :
             </p>
-            <pre className="font-mono text-xs bg-gray-50 rounded-lg p-4 border border-[--si-card-border] overflow-x-auto text-[--si-text-primary]">
+            <pre className="font-mono text-xs rounded-lg p-4 border border-[--si-card-border] overflow-x-auto text-[--si-text-primary]" style={{ backgroundColor: "var(--si-card-bg)" }}>
               {QUICKSTART_JSON}
             </pre>
             <div>

@@ -68,7 +68,7 @@ export function SignalFeedCard({
         {!isWatched && onAddToWatchlist && (
           <button
             onClick={onAddToWatchlist}
-            className="text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="text-xs font-medium text-[--si-text-muted] hover:text-[--si-text-primary] border border-[--si-card-border] rounded-md px-3 py-1.5 hover:bg-white/5 transition-colors flex items-center gap-1.5"
           >
             <Icon icon="solar:bookmark-linear" width={13} />
             Watch

@@ -39,12 +39,12 @@ export default function APIKeyCard() {
       <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4">
         <h2 className="text-sm font-semibold text-[--si-text-primary] mb-3">Your MCP Endpoint</h2>
         <div className="flex items-center gap-2">
-          <code className="flex-1 font-mono text-sm bg-gray-50 rounded-lg px-3 py-2 border border-[--si-card-border] text-[--si-text-primary]">
+          <code className="flex-1 font-mono text-sm rounded-lg px-3 py-2 border border-[--si-card-border] text-[--si-text-primary]" style={{ backgroundColor: "var(--si-card-bg)" }}>
             {MCP_ENDPOINT}
           </code>
           <button
             onClick={copyEndpoint}
-            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-white/5 transition-colors flex items-center gap-1.5"
             title="Copy endpoint"
           >
             {endpointCopied ? (
@@ -61,12 +61,12 @@ export default function APIKeyCard() {
       <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4">
         <h2 className="text-sm font-semibold text-[--si-text-primary] mb-3">API Key</h2>
         <div className="flex items-center gap-2">
-          <code className="flex-1 font-mono text-sm bg-gray-50 rounded-lg px-3 py-2 border border-[--si-card-border] text-[--si-text-primary] tracking-wide">
+          <code className="flex-1 font-mono text-sm rounded-lg px-3 py-2 border border-[--si-card-border] text-[--si-text-primary] tracking-wide" style={{ backgroundColor: "var(--si-card-bg)" }}>
             {maskedKey}
           </code>
           <button
             onClick={copyKey}
-            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-white/5 transition-colors flex items-center gap-1.5"
           >
             {keyCopied ? (
               <Icon icon="solar:check-circle-linear" className="text-green-500" width={16} />
@@ -77,7 +77,7 @@ export default function APIKeyCard() {
           </button>
           <button
             onClick={regenerate}
-            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+            className="rounded-full border border-[--si-card-border] px-3 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-white/5 transition-colors flex items-center gap-1.5"
           >
             <Icon icon="solar:restart-linear" width={16} />
             <span>Regenerate</span>

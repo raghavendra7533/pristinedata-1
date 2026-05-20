@@ -86,7 +86,7 @@ export function SISidebar() {
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = "#F3F4F6";
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(99,102,241,0.08)";
                       (e.currentTarget as HTMLElement).style.color = "var(--si-sidebar-text-hover)";
                     }
                   }}
@@ -125,7 +125,7 @@ export function SISidebar() {
 
       {/* Bottom: user + sign out */}
       <div className="border-t px-2 py-3" style={{ borderColor: "var(--si-sidebar-border)" }}>
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer group">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer group">
           <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
             {initials}
           </div>

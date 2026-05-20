@@ -65,9 +65,10 @@ export default function SISearch() {
           onClick={() => setMode("people")}
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
             mode === "people"
-              ? "bg-white text-gray-900 shadow-sm"
+              ? "text-gray-900 shadow-sm"
               : "text-gray-500 hover:text-gray-700"
           }`}
+          style={mode === "people" ? { backgroundColor: "var(--si-card-bg)" } : {}}
         >
           <Icon icon="solar:user-rounded-linear" className="h-3.5 w-3.5" />
           People
@@ -76,9 +77,10 @@ export default function SISearch() {
           onClick={() => setMode("companies")}
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
             mode === "companies"
-              ? "bg-white text-gray-900 shadow-sm"
+              ? "text-gray-900 shadow-sm"
               : "text-gray-500 hover:text-gray-700"
           }`}
+          style={mode === "companies" ? { backgroundColor: "var(--si-card-bg)" } : {}}
         >
           <Icon icon="solar:buildings-2-linear" className="h-3.5 w-3.5" />
           Companies
@@ -87,8 +89,8 @@ export default function SISearch() {
 
       {/* Search box */}
       <div
-        className="bg-white rounded-xl border shadow-sm overflow-hidden"
-        style={{ borderColor: "var(--si-card-border)" }}
+        className="rounded-xl border shadow-sm overflow-hidden"
+        style={{ backgroundColor: "var(--si-card-bg)", borderColor: "var(--si-card-border)" }}
       >
         <div className="flex items-center gap-3 px-4 py-3.5">
           <Icon
@@ -121,8 +123,8 @@ export default function SISearch() {
 
       {/* Tabs */}
       <div
-        className="mt-4 bg-white rounded-xl border shadow-sm overflow-hidden"
-        style={{ borderColor: "var(--si-card-border)" }}
+        className="mt-4 rounded-xl border shadow-sm overflow-hidden"
+        style={{ backgroundColor: "var(--si-card-bg)", borderColor: "var(--si-card-border)" }}
       >
         {/* Tab bar */}
         <div className="flex border-b" style={{ borderColor: "var(--si-card-border)" }}>
@@ -212,7 +214,7 @@ function SearchRow({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all group"
+      className="flex items-center gap-3 w-full text-left p-3 rounded-lg hover:bg-white/5 border border-transparent hover:border-[--si-card-border] transition-all group"
     >
       <div
         className={`flex-shrink-0 w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center`}
@@ -220,7 +222,7 @@ function SearchRow({
         <Icon icon={icon} className={`${iconColor} h-4 w-4`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900 truncate">
+        <p className="text-sm font-medium text-[--si-text-secondary] group-hover:text-[--si-text-primary] truncate">
           {primary}
         </p>
         {secondary && (

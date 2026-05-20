@@ -123,7 +123,7 @@ export default function SIPersonPlaybook() {
       </aside>
 
       {/* Right Panel */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
+      <main className="flex-1 overflow-y-auto p-8" style={{ backgroundColor: "var(--si-bg)" }}>
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export default function SIPersonPlaybook() {
               <Icon icon="solar:letter-linear" className="h-4 w-4 text-green-500" />
               Suggested outreach
             </h3>
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-sm">
+            <div className="rounded-lg border p-4 text-sm" style={{ backgroundColor: "var(--si-card-bg)", borderColor: "var(--si-card-border)" }}>
               <div className="space-y-1 mb-3 text-xs text-gray-500">
                 <p><span className="font-medium text-gray-600">To:</span> {person.name} &lt;{person.name.toLowerCase().replace(" ", ".")}@{person.domain}&gt;</p>
                 <p><span className="font-medium text-gray-600">Subject:</span> {playbook.email.subject}</p>
