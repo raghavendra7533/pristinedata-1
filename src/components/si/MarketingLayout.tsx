@@ -1,14 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { Icon } from "@iconify/react";
+import logo from "@/assets/pristine-data-logo.svg";
 
 export function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white">
       {/* Fixed top nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#E5E7EB] h-14 flex items-center justify-between px-6">
-        <div className="flex items-center gap-2">
-          <Icon icon="solar:radar-bold" className="text-[#6366F1]" width={22} height={22} />
-          <span className="text-sm font-semibold text-[#0F0F0F]">Pristine SI</span>
+        <div className="flex items-center">
+          <img src={logo} alt="Pristine Data" height={28} className="h-7 w-auto" />
         </div>
         <NavLink
           to="/sign-in"

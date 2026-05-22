@@ -5,6 +5,7 @@ import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS } from "@/lib/si/mockData";
 import type { PlaybookData } from "@/lib/si/types";
 import { AccountContextPanel } from "@/components/si/playbook/AccountContextPanel";
 import { PlaybookTabs } from "@/components/si/playbook/PlaybookTabs";
+import { ScheduleMeetingModal } from "@/components/si/playbook/ScheduleMeetingModal";
 
 export default function SIPlaybook() {
   const { accountId } = useParams<{ accountId: string }>();
@@ -27,6 +28,7 @@ export default function SIPlaybook() {
 
   // Simulated "generate" loading
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   function handleGenerate() {
     setIsGenerating(true);
@@ -65,6 +67,14 @@ export default function SIPlaybook() {
             <p className="text-xs text-[--si-text-muted] mb-0.5">Playbook</p>
             <h1 className="text-xl font-semibold text-[--si-text-primary]">{playbook.accountName}</h1>
           </div>
+          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowScheduleModal(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-[--si-card-border] text-[--si-text-primary] bg-transparent px-4 py-2 text-sm font-medium hover:bg-[--si-card-bg] transition-colors"
+          >
+            <Icon icon="solar:calendar-add-linear" className="w-4 h-4" />
+            Schedule Meeting
+          </button>
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
@@ -93,7 +103,10 @@ export default function SIPlaybook() {
               </>
             )}
           </button>
+          </div>
         </div>
+
+        <ScheduleMeetingModal open={showScheduleModal} onClose={() => setShowScheduleModal(false)} />
 
         {/* Generated at label */}
         <p className="text-xs text-[--si-text-muted] mb-6">
@@ -106,7 +119,7 @@ export default function SIPlaybook() {
         </p>
 
         {/* Tabs */}
-        <PlaybookTabs playbook={playbook} accountName={account?.accountName} onToggleAction={handleToggleAction} />
+        <PlaybookTabs playbook={playbook} accountName={account?.accountName} onToggleAction={handleToggleAction} hasMeetingNotes={false} />
       </div>
     </div>
   );

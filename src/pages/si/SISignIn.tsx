@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { MarketingLayout } from "@/components/si/MarketingLayout";
+import logo from "@/assets/pristine-data-logo.svg";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 
 export default function SISignIn() {
@@ -31,9 +32,8 @@ export default function SISignIn() {
       <div className="min-h-[calc(100vh-56px)] bg-[#F8F8FA] flex items-start justify-center">
         <div className="bg-white rounded-[12px] border border-[#E5E7EB] p-8 w-full max-w-md mx-auto mt-16 shadow-sm">
           {/* Logo */}
-          <div className="flex items-center gap-2 justify-center mb-6">
-            <Icon icon="solar:radar-bold" className="text-[#6366F1]" width={26} height={26} />
-            <span className="text-lg font-semibold text-[#6366F1]">Pristine SI</span>
+          <div className="flex items-center justify-center mb-6">
+            <img src={logo} alt="Pristine Data" className="h-8 w-auto" />
           </div>
 
           <h1 className="text-xl font-bold text-[#0F0F0F] text-center mb-1">Welcome back</h1>

@@ -7,50 +7,11 @@ interface PlaybookTabsProps {
   playbook: PlaybookData;
   accountName?: string;
   onToggleAction: (id: string) => void;
+  hasMeetingNotes?: boolean;
 }
 
-const TABS = ["Overview", "Discovery", "Talking Points", "Next Actions", "Timeline", "Recent News"] as const;
+const TABS = ["Summary", "Discovery", "Talking Points", "Next Actions", "Timeline", "Deep Dive"] as const;
 type Tab = (typeof TABS)[number];
-
-interface NewsArticle {
-  title: string;
-  source: string;
-  date: string;
-  summary: string;
-  url?: string;
-}
-
-const ACCOUNT_NEWS: Record<string, NewsArticle[]> = {
-  Gong: [
-    { title: "Gong raises $10M to expand its revenue intelligence platform", source: "TechCrunch", date: "May 14, 2026", summary: "Gong announced a new funding round aimed at deepening AI-powered call analytics and expanding into EMEA markets." },
-    { title: "Gong opens 34 new GTM and engineering roles ahead of Celebrate 2026", source: "LinkedIn News", date: "May 15, 2026", summary: "The hiring surge signals aggressive headcount growth as Gong prepares for its annual customer conference in June." },
-    { title: "Gong launches mid-market product tier to compete with Chorus and Salesloft", source: "The Information", date: "May 9, 2026", summary: "A new SKU priced below their enterprise offering targets teams of 10–50 reps, opening a segment previously left to competitors." },
-  ],
-  Lattice: [
-    { title: "Lattice closes $50M Series D led by Andreessen Horowitz", source: "Crunchbase News", date: "May 16, 2026", summary: "The round values Lattice at $1.2B and will fund product expansion into compensation benchmarking and AI-driven performance reviews." },
-    { title: "Lattice hires new VP of Sales Engineering from Snowflake", source: "LinkedIn", date: "May 14, 2026", summary: "Marcus Chen joins with a track record of modernizing pre-sales tech stacks — a signal the company is investing in its enterprise motion." },
-    { title: "Lattice named a Leader in the 2026 Gartner Magic Quadrant for HCM", source: "Gartner", date: "May 2, 2026", summary: "The recognition strengthens Lattice's positioning against Workday and Culture Amp in the mid-market HR tech space." },
-  ],
-  Outreach: [
-    { title: "Outreach reports heavy internal research on revenue intelligence tools", source: "Bombora", date: "May 14, 2026", summary: "Intent data shows Outreach's buying committee researching 14+ properties around conversation analytics over the past 7 days." },
-    { title: "Outreach replaces Drift with Qualified for conversational sales", source: "BuiltWith", date: "May 7, 2026", summary: "The tech swap indicates an active vendor consolidation cycle and openness to evaluating adjacent tooling across their stack." },
-    { title: "Outreach migrates data warehouse to Snowflake, completing a multi-quarter project", source: "Outreach Blog", date: "May 12, 2026", summary: "The migration opens a window for integrations roadmap conversations, especially around RevOps analytics tooling." },
-  ],
-  Qualified: [
-    { title: "Qualified secures $95M growth equity to expand Pipeline Cloud", source: "Crunchbase", date: "May 8, 2026", summary: "The round confirms a multi-year investment horizon and signals budget availability for complementary sales tools." },
-    { title: "Qualified hires new CRO from Salesforce to lead enterprise expansion", source: "LinkedIn", date: "May 13, 2026", summary: "New revenue leaders typically audit the full sales stack within 90 days — a prime window for outreach." },
-  ],
-  Clari: [
-    { title: "Clari raises $225M Series F at $1.6B valuation", source: "TechCrunch", date: "May 17, 2026", summary: "The raise signals platform expansion and aggressive partner ecosystem investment over the next 18 months." },
-    { title: "Clari posts 22 RevOps and data roles this week", source: "LinkedIn Jobs", date: "May 15, 2026", summary: "Heavy analytics infrastructure hiring is a strong indicator of tooling investment cycles opening across their revenue org." },
-  ],
-};
-
-const DEFAULT_NEWS: NewsArticle[] = [
-  { title: "Company announces expansion into new markets", source: "Business Wire", date: "May 10, 2026", summary: "Recent geographic expansion signals increased budget availability and potential for new vendor relationships." },
-  { title: "Leadership team bolstered with two senior hires from Big Tech", source: "LinkedIn", date: "May 6, 2026", summary: "New executives typically audit the existing vendor stack within the first 90 days of joining." },
-  { title: "Q1 2026 revenue up 40% YoY, company eyes IPO in 2027", source: "Reuters", date: "Apr 28, 2026", summary: "Strong growth trajectory suggests increasing willingness to invest in tooling that supports scale." },
-];
 
 const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string }> = {
   High: { bg: "#E0E7FF", text: "#3730A3" },
@@ -58,31 +19,36 @@ const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string
   Low: { bg: "#F3F4F6", text: "#6B7280" },
 };
 
-export function PlaybookTabs({ playbook, accountName, onToggleAction }: PlaybookTabsProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("Overview");
-  const news = ACCOUNT_NEWS[accountName ?? ""] ?? DEFAULT_NEWS;
+export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false }: PlaybookTabsProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("Summary");
 
   return (
     <div>
       {/* Tab bar */}
       <div className="flex border-b border-[--si-card-border] mb-6 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`text-sm px-4 py-2 border-b-2 cursor-pointer whitespace-nowrap transition-colors ${
-              activeTab === tab
-                ? "border-[--si-primary] text-[--si-primary] font-semibold"
-                : "border-transparent text-[--si-text-secondary] hover:text-[--si-text-primary]"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+        {TABS.map((tab) => {
+          const isLocked = tab === "Next Actions" && !hasMeetingNotes;
+          return (
+            <button
+              key={tab}
+              onClick={() => !isLocked && setActiveTab(tab)}
+              title={isLocked ? "Next actions are generated after your first meeting. Upload notes to unlock this." : undefined}
+              className={`text-sm px-4 py-2 border-b-2 whitespace-nowrap transition-colors ${
+                isLocked
+                  ? "border-transparent text-[--si-text-secondary] opacity-40 cursor-not-allowed"
+                  : activeTab === tab
+                  ? "border-[--si-primary] text-[--si-primary] font-semibold cursor-pointer"
+                  : "border-transparent text-[--si-text-secondary] hover:text-[--si-text-primary] cursor-pointer"
+              }`}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab content */}
-      {activeTab === "Overview" && (
+      {activeTab === "Summary" && (
         <div className="flex flex-col gap-6">
           {/* Thesis */}
           <div>
@@ -178,7 +144,20 @@ export function PlaybookTabs({ playbook, accountName, onToggleAction }: Playbook
       )}
 
       {activeTab === "Next Actions" && (
-        <NextActionChecklist actions={playbook.nextActions} onToggle={onToggleAction} />
+        hasMeetingNotes ? (
+          <NextActionChecklist actions={playbook.nextActions} onToggle={onToggleAction} />
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <div className="w-10 h-10 rounded-full bg-[--si-card-border] flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--si-text-secondary)" }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-[--si-text-primary]">Next actions are generated after your first meeting.</p>
+            <p className="text-xs text-[--si-text-secondary]">Upload meeting notes to unlock this tab.</p>
+          </div>
+        )
       )}
 
       {activeTab === "Timeline" && (
@@ -189,27 +168,95 @@ export function PlaybookTabs({ playbook, accountName, onToggleAction }: Playbook
         </div>
       )}
 
-      {activeTab === "Recent News" && (
-        <div className="flex flex-col gap-3">
-          {news.map((article, i) => (
-            <div
-              key={i}
-              className="rounded-[12px] border border-[--si-card-border] bg-white p-4 flex flex-col gap-1.5 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wide">
-                  {article.source}
-                </span>
-                <span className="text-[11px] text-gray-400">· {article.date}</span>
-              </div>
-              <p className="text-[14px] font-semibold text-gray-900 leading-snug">
-                {article.title}
+      {activeTab === "Deep Dive" && (
+        <div className="flex flex-col gap-8">
+          {/* Company Overview */}
+          <div>
+            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
+              Company Overview
+            </h3>
+            <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-3">
+              <p className="text-sm text-[--si-text-primary] leading-relaxed">
+                This account operates a B2B SaaS platform focused on revenue operations and pipeline intelligence. Founded in 2017, they serve mid-market and enterprise sales teams across North America and EMEA, with a particular concentration in the technology and financial services verticals.
               </p>
-              <p className="text-[13px] text-gray-500 leading-snug">
-                {article.summary}
-              </p>
+              <ul className="flex flex-col gap-1.5">
+                {[
+                  { label: "Founded", value: "2017" },
+                  { label: "Employees", value: "450–600" },
+                  { label: "Stage", value: "Series C" },
+                  { label: "HQ", value: "San Francisco, CA" },
+                  { label: "Primary Verticals", value: "Tech, FinServ, Healthcare" },
+                ].map(({ label, value }) => (
+                  <li key={label} className="flex items-center gap-2 text-sm">
+                    <span className="text-[--si-text-secondary] min-w-[140px]">{label}</span>
+                    <span className="text-[--si-text-primary] font-medium">{value}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+          </div>
+
+          {/* Competitor Activity */}
+          <div>
+            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
+              Competitor Activity
+            </h3>
+            <div className="flex flex-col gap-3">
+              {[
+                {
+                  competitor: "Gong",
+                  activity: "Launched a new mid-market SKU targeting teams of 10–50 reps, undercutting enterprise pricing by ~40%.",
+                  signal: "Pricing pressure",
+                },
+                {
+                  competitor: "Clari",
+                  activity: "Raised $225M Series F and is aggressively expanding its partner ecosystem — likely to increase co-sell motions in shared accounts.",
+                  signal: "Market expansion",
+                },
+                {
+                  competitor: "Outreach",
+                  activity: "Actively consolidating its tech stack and migrating to Snowflake — opening a window for adjacent tooling conversations.",
+                  signal: "Tech investment",
+                },
+              ].map(({ competitor, activity, signal }) => (
+                <div key={competitor} className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-[--si-text-primary]">{competitor}</span>
+                    <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-[#F3F4F6] text-[#6B7280]">{signal}</span>
+                  </div>
+                  <p className="text-sm text-[--si-text-secondary] leading-snug">{activity}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Market Intelligence */}
+          <div>
+            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
+              Market Intelligence
+            </h3>
+            <div className="flex flex-col gap-3">
+              {[
+                {
+                  trend: "AI-driven GTM consolidation",
+                  detail: "Enterprise buyers are reducing their sales tech stack from an average of 12 tools to 6–8. Vendors that can consolidate use cases are winning budget cycles.",
+                },
+                {
+                  trend: "Intent data becoming table stakes",
+                  detail: "Across the revenue intelligence category, 78% of new RFPs now require native intent data integration — a shift from 2024 when it was an optional add-on.",
+                },
+                {
+                  trend: "CFO-led procurement scrutiny",
+                  detail: "Q1 2026 data shows a 34% increase in multi-stakeholder deals requiring ROI documentation upfront. Sales cycles are lengthening by an average of 3 weeks.",
+                },
+              ].map(({ trend, detail }) => (
+                <div key={trend} className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-1.5">
+                  <p className="text-[13px] font-semibold text-[--si-text-primary]">{trend}</p>
+                  <p className="text-sm text-[--si-text-secondary] leading-snug">{detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
