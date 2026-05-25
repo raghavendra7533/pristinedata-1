@@ -12,6 +12,8 @@ const MORNING_BRIEF_ACCOUNTS = [
     id: "acc-clari",
     name: "Clari",
     domain: "clari.com",
+    contact: "Sarah Kim, VP Finance",
+    bestCallReason: "Series E just closed. Finance persona is in evaluation mode — budget cycle opens Q3. You haven't spoken in 7 days.",
     context: "Series E just closed. Finance persona in evaluation mode; budget cycle opens Q3. You have 2 contacts.",
     cta: "Draft outreach →",
     ctaStyle: "funding" as const,
@@ -20,6 +22,8 @@ const MORNING_BRIEF_ACCOUNTS = [
     id: "acc-clearbit",
     name: "Clearbit",
     domain: "clearbit.com",
+    contact: "Marcus Holt, VP Engineering",
+    bestCallReason: "Buying committee active for 8 days. Vendor evaluation window closes in ~3 days. You haven't spoken since April 12.",
     context: "Buying committee researching visitor ID tools (your category) across 14 properties. 3 decision-makers identified.",
     cta: "View intent details →",
     ctaStyle: "intent" as const,
@@ -28,6 +32,8 @@ const MORNING_BRIEF_ACCOUNTS = [
     id: "acc-gong",
     name: "Gong",
     domain: "gong.io",
+    contact: "James Rubin, CRO",
+    bestCallReason: "34 GTM & eng roles posted this week. Hiring ramp signals expanded budget ahead of Celebrate conference.",
     context: "Hiring 14 sales & eng roles ahead of Celebrate conference. Complementary tooling pitch window open this week.",
     cta: "View hiring signal →",
     ctaStyle: "hiring" as const,
@@ -42,10 +48,66 @@ const STATS = [
 ];
 
 const QUEUE_ITEMS = [
-  { name: "Clari — Follow up on intent signal",    overdue: false },
-  { name: "Clearbit — Send pricing deck",          overdue: true  },
-  { name: "Lattice — Schedule discovery call",     overdue: false },
-  { name: "Gong — Connect with new CRO",           overdue: true  },
+  {
+    id: "q1",
+    task: "Follow up",
+    company: "Clari",
+    contact: "Sarah Kim, VP Finance",
+    signal: "Series E closed 7d ago — budget cycle opens Q3",
+    signalIcon: "solar:bolt-bold",
+    badge: "Now",
+    badgeColor: "#EF4444",
+    meta: "Overdue · 7 days since last touch",
+    done: false,
+  },
+  {
+    id: "q2",
+    task: "Send deck",
+    company: "Clearbit",
+    contact: "3 decision-makers",
+    signal: "Intent surge · buying window closing in ~3 days",
+    signalIcon: "solar:bolt-bold",
+    badge: "Now",
+    badgeColor: "#EF4444",
+    meta: "Overdue · created 3 days ago",
+    done: false,
+  },
+  {
+    id: "q3",
+    task: "LinkedIn connect",
+    company: "Gong",
+    contact: "SDR hiring lead",
+    signal: "Hiring surge · warm intro via James L.",
+    signalIcon: "solar:users-group-rounded-bold",
+    badge: "Today",
+    badgeColor: "#F59E0B",
+    meta: "Due today",
+    done: false,
+  },
+  {
+    id: "q4",
+    task: "Prep discovery call",
+    company: "Outreach",
+    contact: "",
+    signal: "Call Thu 2pm · no-touch risk (22 days)",
+    signalIcon: "solar:calendar-bold",
+    badge: "Thu",
+    badgeColor: "#9CA3AF",
+    meta: "Due Thursday",
+    done: false,
+  },
+  {
+    id: "q5",
+    task: "Research Salesloft migration path",
+    company: "",
+    contact: "",
+    signal: "",
+    signalIcon: "",
+    badge: "",
+    badgeColor: "",
+    meta: "Done · 9:14 AM",
+    done: true,
+  },
 ];
 
 const FILTER_TABS: { key: "all" | SignalType; label: string }[] = [
@@ -145,10 +207,17 @@ export default function SIDashboard() {
   const navigate = useNavigate();
   const { watchedAccounts } = useUserProfileStore();
   const [signalFilter, setSignalFilter] = useState<"all" | SignalType>("all");
-  const heroAccount = useMemo(
-    () => MORNING_BRIEF_ACCOUNTS[Math.floor(Math.random() * MORNING_BRIEF_ACCOUNTS.length)],
+  const shuffledBriefAccounts = useMemo(
+    () => [...MORNING_BRIEF_ACCOUNTS].sort(() => Math.random() - 0.5),
     []
   );
+  const heroAccount = shuffledBriefAccounts[0];
+  const bestCallAccount = shuffledBriefAccounts[1] ?? shuffledBriefAccounts[0];
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(
+    () => new Set(QUEUE_ITEMS.filter((q) => q.done).map((q) => q.id))
+  );
+  const toggleItem = (id: string) =>
+    setCheckedItems((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
@@ -258,10 +327,7 @@ export default function SIDashboard() {
       </div>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 20, padding: "20px 24px", alignItems: "flex-start" }}>
-
-        {/* LEFT: main column */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* HERO BANNER */}
           <div
@@ -374,7 +440,7 @@ export default function SIDashboard() {
               </p>
 
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {MORNING_BRIEF_ACCOUNTS.map((acct, i) => (
+                {shuffledBriefAccounts.map((acct, i) => (
                   <div
                     key={acct.id}
                     style={{
@@ -389,6 +455,7 @@ export default function SIDashboard() {
                       {acct.context}
                     </p>
                     <button
+                      onClick={() => navigate(`/si/playbook/${acct.id}`)}
                       style={{
                         ...CTA_BUTTON[acct.ctaStyle],
                         ...displayFont,
@@ -448,6 +515,12 @@ export default function SIDashboard() {
               </div>
             ))}
           </div>
+
+        {/* ── Bottom row: signals + sidebar ─────────────────────────── */}
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+
+          {/* LEFT: Priority Signals */}
+          <div style={{ flex: 1, minWidth: 0 }}>
 
           {/* PRIORITY SIGNALS */}
           <div>
@@ -603,94 +676,118 @@ export default function SIDashboard() {
               })}
             </div>
           </div>
-        </div>
+          </div>{/* end left signals column */}
 
         {/* ── RIGHT SIDEBAR ─────────────────────────────────────────────── */}
-        <div style={{ width: 296, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, position: "sticky", top: 57 }}>
+        <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 0, position: "sticky", top: 57, borderRadius: 16, overflow: "hidden", border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}>
 
-          {/* Best Call Card */}
-          <div
-            style={{
-              borderRadius: 14,
-              overflow: "hidden",
-              border: "1px solid var(--si-card-border)",
-              backgroundColor: "var(--si-card-bg)",
-            }}
-          >
-            {/* Top gradient strip */}
-            <div
+          {/* Best Call Hero */}
+          <div style={{ padding: "18px 18px 16px", background: "linear-gradient(160deg, rgba(20,184,166,0.08) 0%, transparent 60%)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#14B8A6" }} />
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#14B8A6" }}>
+                Best call to make today
+              </span>
+            </div>
+            <p style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
+              {bestCallAccount.name} —{" "}
+              <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>{bestCallAccount.contact}</span>
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)", marginTop: 8 }}>
+              {bestCallAccount.bestCallReason}
+            </p>
+            <button
+              onClick={() => navigate(`/si/playbook/${bestCallAccount.id}`)}
               style={{
-                padding: "16px 18px 0",
-                background: "linear-gradient(160deg, rgba(99,102,241,0.06) 0%, transparent 60%)",
+                marginTop: 14,
+                width: "100%",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                fontSize: 12, fontWeight: 700,
+                padding: "9px 16px", borderRadius: 999, cursor: "pointer",
+                backgroundColor: "#134E4A", color: "#fff", border: "none",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0F3D39")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#134E4A")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: 6,
-                  backgroundColor: "rgba(99,102,241,0.12)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Icon icon="solar:phone-calling-bold" width={11} style={{ color: "var(--si-primary)" }} />
-                </div>
-                <span style={labelStyle}>Best call to make today</span>
-              </div>
+              <Icon icon="solar:letter-bold" width={13} />
+              Draft outreach now
+            </button>
+          </div>
 
-              <p style={{ ...displayFont, fontSize: 15, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
-                Clearbit — Marcus Holt,{" "}
-                <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>VP Engineering</span>
-              </p>
-
-              <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)", marginTop: 8, paddingBottom: 14 }}>
-                Buying committee active for 8 days. Vendor evaluation window closes in ~3 days. You haven't spoken since April 12.
-              </p>
+          {/* Queue */}
+          <div style={{ borderTop: "1px solid var(--si-card-border)" }}>
+            {/* Queue header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px 10px" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--si-text-primary)" }}>
+                Your Queue · {QUEUE_ITEMS.filter(q => !checkedItems.has(q.id)).length} open
+              </span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#EF4444", backgroundColor: "rgba(239,68,68,0.08)", padding: "2px 8px", borderRadius: 999 }}>
+                2 overdue
+              </span>
             </div>
 
-            <div style={{ padding: "0 18px 16px" }}>
-              <button
-                style={{
-                  width: "100%",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  ...displayFont, fontSize: 12, fontWeight: 700,
-                  padding: "9px 16px", borderRadius: 8, cursor: "pointer",
-                  backgroundColor: "var(--si-primary)", color: "#fff", border: "none",
-                  boxShadow: "0 2px 12px rgba(99,102,241,0.3)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary)")}
-              >
-                <Icon icon="solar:letter-bold" width={13} />
-                Draft outreach now
-              </button>
-            </div>
+            {/* Queue items */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {QUEUE_ITEMS.map((item, i) => {
+                const checked = checkedItems.has(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                      padding: "10px 18px",
+                      borderTop: i === 0 ? "none" : "1px solid var(--si-card-border)",
+                      backgroundColor: checked ? "rgba(0,0,0,0.02)" : "transparent",
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleItem(item.id)}
+                      style={{
+                        marginTop: 2, width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                        border: checked ? "none" : "1.5px solid #D1D5DB",
+                        backgroundColor: checked ? "#14B8A6" : "transparent",
+                        cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      {checked && <Icon icon="solar:check-read-bold" width={11} style={{ color: "#fff" }} />}
+                    </button>
 
-            {/* Queue */}
-            <div
-              style={{
-                borderTop: "1px solid var(--si-card-border)",
-                padding: "14px 18px 16px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={labelStyle}>Your queue · {QUEUE_ITEMS.length} open</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#EF4444" }}>2 overdue</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {QUEUE_ITEMS.map((item, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{
-                      width: 6, height: 6, borderRadius: "50%", marginTop: 4, flexShrink: 0,
-                      backgroundColor: item.overdue ? "#EF4444" : "var(--si-text-muted)",
-                    }} />
-                    <span style={{ fontSize: 12, lineHeight: 1.45, color: item.overdue ? "#EF4444" : "var(--si-text-secondary)" }}>
-                      {item.name}
-                    </span>
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, color: "var(--si-text-primary)", textDecoration: checked ? "line-through" : "none", opacity: checked ? 0.45 : 1 }}>
+                          {item.task}{item.company ? ` · ${item.company}` : ""}
+                          {item.contact ? <span style={{ color: "var(--si-text-secondary)", fontWeight: 500 }}>{` → ${item.contact}`}</span> : null}
+                        </p>
+                        {item.badge && !checked && (
+                          <span style={{
+                            flexShrink: 0, fontSize: 10, fontWeight: 700,
+                            padding: "2px 8px", borderRadius: 999,
+                            backgroundColor: `${item.badgeColor}18`,
+                            color: item.badgeColor,
+                          }}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      {item.signal && !checked && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                          <Icon icon={item.signalIcon} width={11} style={{ color: "#14B8A6", flexShrink: 0 }} />
+                          <span style={{ fontSize: 11, color: "#14B8A6", lineHeight: 1.4 }}>{item.signal}</span>
+                        </div>
+                      )}
+                      <p style={{ fontSize: 11, color: "var(--si-text-muted)", marginTop: 2 }}>{item.meta}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
+      </div>
       </div>
     </div>
   );

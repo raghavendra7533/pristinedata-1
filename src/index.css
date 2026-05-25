@@ -1,12 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@1&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&display=swap');
 
 @layer base {
   :root {
@@ -123,11 +123,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
   }
@@ -333,6 +333,34 @@ All colors MUST be HSL.
   --si-text-secondary: #4B5563;
   --si-text-muted: #9CA3AF;
 
+  /* ── Typography scale ── */
+  --si-font: 'Inter', sans-serif;
+
+  /* Eyebrow / section label: 10px, 800, uppercase, wide tracking */
+  --si-text-eyebrow-size: 10px;
+  --si-text-eyebrow-weight: 800;
+  --si-text-eyebrow-spacing: 0.07em;
+
+  /* Card title / primary label: 13px, 700, tight tracking */
+  --si-text-title-size: 13px;
+  --si-text-title-weight: 700;
+  --si-text-title-spacing: -0.01em;
+
+  /* Body: 12px, 400, normal */
+  --si-text-body-size: 12px;
+  --si-text-body-weight: 400;
+
+  /* Bold inline callout: 12px, 700 */
+  --si-text-callout-weight: 700;
+
+  /* Stat number: 30px, 800 */
+  --si-text-stat-size: 30px;
+  --si-text-stat-weight: 800;
+
+  /* Stat label: 10px, 600, uppercase */
+  --si-text-stat-label-size: 10px;
+  --si-text-stat-label-weight: 600;
+
   --si-signal-funding: #D97706;
   --si-signal-hiring: #2563EB;
   --si-signal-intent: #7C3AED;
@@ -373,4 +401,53 @@ All colors MUST be HSL.
   --si-signal-tech: #34D399;
   --si-signal-leadership: #F472B6;
   --si-signal-expansion: #FB923C;
+}
+
+/* ─── SI Typography Utilities ───────────────────────────────────────────── */
+[data-theme="si"] {
+  font-family: var(--si-font);
+}
+
+.si-eyebrow {
+  font-family: var(--si-font);
+  font-size: var(--si-text-eyebrow-size);
+  font-weight: var(--si-text-eyebrow-weight);
+  letter-spacing: var(--si-text-eyebrow-spacing);
+  text-transform: uppercase;
+  color: var(--si-text-muted);
+}
+
+.si-title {
+  font-family: var(--si-font);
+  font-size: var(--si-text-title-size);
+  font-weight: var(--si-text-title-weight);
+  letter-spacing: var(--si-text-title-spacing);
+  color: var(--si-text-primary);
+  line-height: 1.3;
+}
+
+.si-body {
+  font-family: var(--si-font);
+  font-size: var(--si-text-body-size);
+  font-weight: var(--si-text-body-weight);
+  color: var(--si-text-secondary);
+  line-height: 1.6;
+}
+
+.si-stat-number {
+  font-family: var(--si-font);
+  font-size: var(--si-text-stat-size);
+  font-weight: var(--si-text-stat-weight);
+  color: var(--si-text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.si-stat-label {
+  font-family: var(--si-font);
+  font-size: var(--si-text-stat-label-size);
+  font-weight: var(--si-text-stat-label-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--si-text-muted);
 }
