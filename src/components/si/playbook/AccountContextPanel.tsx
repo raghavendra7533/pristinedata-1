@@ -1,13 +1,44 @@
 import { useState } from "react";
 import type { WatchlistAccount, Stakeholder } from "@/lib/si/types";
 import { IntentScoreBadge } from "@/components/si/shared/IntentScoreBadge";
-import { SignalTypeBadge } from "@/components/si/shared/SignalTypeBadge";
 import { StakeholderCard } from "./StakeholderCard";
+import { SIGNAL_TYPES } from "@/lib/si/constants";
+import type { SignalType } from "@/lib/si/types";
 
 interface AccountContextPanelProps {
   account: WatchlistAccount;
   stakeholders: Stakeholder[];
   onAddStakeholder: () => void;
+}
+
+function SignalRow({ signal }: { signal: { id: string; type: string; summary: string } }) {
+  const [expanded, setExpanded] = useState(false);
+  const color = SIGNAL_TYPES[signal.type as SignalType]?.color ?? "#6366F1";
+  return (
+    <div
+      className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5"
+      style={{ border: `1px solid ${color}30`, backgroundColor: color + "0a" }}
+    >
+      <span
+        className="text-xs font-bold"
+        style={{ color }}
+      >
+        {SIGNAL_TYPES[signal.type as SignalType]?.label ?? signal.type}
+      </span>
+      <p className="text-xs text-[--si-text-secondary] leading-relaxed">
+        <span className={expanded ? "" : "line-clamp-2"}>{signal.summary}</span>
+        {signal.summary.length > 80 && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="ml-1 font-medium hover:underline whitespace-nowrap"
+            style={{ color }}
+          >
+            {expanded ? "less" : "more"}
+          </button>
+        )}
+      </p>
+    </div>
+  );
 }
 
 export function AccountContextPanel({ account, stakeholders, onAddStakeholder }: AccountContextPanelProps) {
@@ -55,14 +86,9 @@ export function AccountContextPanel({ account, stakeholders, onAddStakeholder }:
         {recentSignals.length === 0 ? (
           <p className="text-xs text-[--si-text-muted]">No signals yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {recentSignals.map((signal) => (
-              <div key={signal.id} className="flex items-start gap-1.5">
-                <div className="flex-shrink-0 mt-0.5">
-                  <SignalTypeBadge type={signal.type} size="sm" />
-                </div>
-                <p className="text-xs text-[--si-text-secondary] leading-snug line-clamp-2">{signal.summary}</p>
-              </div>
+              <SignalRow key={signal.id} signal={signal} />
             ))}
           </div>
         )}

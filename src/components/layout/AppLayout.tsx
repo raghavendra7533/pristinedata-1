@@ -71,12 +71,7 @@ const sidebarSections: SidebarSection[] = [
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark");
-    }
-    return false;
-  });
+  const [isDark, setIsDark] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
@@ -90,10 +85,11 @@ export function AppLayout() {
   }, [isDark]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDark(true);
-    }
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+    const fontSizes: Record<string, string> = { sm: "13px", md: "15px", lg: "17px" };
+    const saved = localStorage.getItem("fontSize") ?? "md";
+    document.documentElement.style.setProperty("--font-size-base", fontSizes[saved] ?? "15px");
   }, []);
 
   // Auto-expand parent if child route is active

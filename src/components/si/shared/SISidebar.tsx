@@ -27,7 +27,7 @@ export function SISidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const profile = useUserProfileStore((s) => s.profile);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const [isDark, setIsDark] = useState(false);
 
   function toggleDark() {
     const next = !isDark;

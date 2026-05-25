@@ -252,8 +252,8 @@ export default function SIDashboard() {
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-10 flex items-center justify-between px-6 py-3"
-        style={{ backgroundColor: "var(--si-card-bg)", borderBottom: "1px solid var(--si-card-border)" }}
+        className="sticky top-0 z-10 flex items-center justify-between px-6"
+        style={{ backgroundColor: "var(--si-card-bg)", borderBottom: "1px solid var(--si-card-border)", height: 57 }}
       >
         <div>
           <p style={{ ...displayFont, fontSize: 15, fontWeight: 700, color: "var(--si-text-primary)" }}>
@@ -295,9 +295,10 @@ export default function SIDashboard() {
             style={{
               display: "flex", alignItems: "center", gap: 8,
               fontSize: 12, color: "var(--si-text-muted)",
-              padding: "6px 14px", borderRadius: 8, width: 210,
+              padding: "6px 14px", borderRadius: 8, width: 240,
               border: "1px solid var(--si-card-border)",
               backgroundColor: "var(--si-card-bg)", cursor: "pointer",
+              whiteSpace: "nowrap",
             }}
           >
             <Icon icon="solar:magnifer-linear" width={13} />

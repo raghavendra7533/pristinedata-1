@@ -10,6 +10,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    --font-size-base: 15px;
+
     /* Pristine Data AI — Light Mode (Slate palette) */
     --background: 0 0% 100%;
     --foreground: 222 84% 4%;
@@ -124,6 +126,7 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    font-size: var(--font-size-base);
   }
 
   h1, h2, h3, h4, h5, h6 {
