@@ -1,217 +1,696 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
-import { MOCK_SIGNALS, MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS, DEMO_ACCOUNTS } from "@/lib/si/mockData";
-import { SummaryCard } from "@/components/si/dashboard/SummaryCard";
-import { SignalFeedCard } from "@/components/si/dashboard/SignalFeedCard";
-import { ICPSummaryPanel } from "@/components/si/dashboard/ICPSummaryPanel";
-import { TopAccountsPanel } from "@/components/si/dashboard/TopAccountsPanel";
+import { MOCK_SIGNALS, MOCK_WATCHLIST_ACCOUNTS } from "@/lib/si/mockData";
 import type { SignalType } from "@/lib/si/types";
-import { SIGNAL_TYPES } from "@/lib/si/constants";
 
-function countSignalsInWindow(days: number): number {
-  const cutoff = Date.now() - days * 86400000;
-  return MOCK_SIGNALS.filter((s) => new Date(s.detectedAt).getTime() > cutoff).length;
+// ─── Mock data ──────────────────────────────────────────────────────────────
+
+const MORNING_BRIEF_ACCOUNTS = [
+  {
+    id: "acc-clari",
+    name: "Clari",
+    domain: "clari.com",
+    context: "Series E just closed. Finance persona in evaluation mode; budget cycle opens Q3. You have 2 contacts.",
+    cta: "Draft outreach →",
+    ctaStyle: "funding" as const,
+  },
+  {
+    id: "acc-clearbit",
+    name: "Clearbit",
+    domain: "clearbit.com",
+    context: "Buying committee researching visitor ID tools (your category) across 14 properties. 3 decision-makers identified.",
+    cta: "View intent details →",
+    ctaStyle: "intent" as const,
+  },
+  {
+    id: "acc-gong",
+    name: "Gong",
+    domain: "gong.io",
+    context: "Hiring 14 sales & eng roles ahead of Celebrate conference. Complementary tooling pitch window open this week.",
+    cta: "View hiring signal →",
+    ctaStyle: "hiring" as const,
+  },
+];
+
+const STATS = [
+  { label: "ACCOUNTS AT RISK", value: 3,  sub: "Longest: Outreach (22d)", subColor: "#F59E0B", icon: "solar:danger-triangle-bold",         iconColor: "#EF4444" },
+  { label: "NEW SIGNALS",       value: 17, sub: "3 high priority",          subColor: "#10B981", icon: "solar:pulse-2-bold",                  iconColor: "#6366F1" },
+  { label: "OPEN TASKS",        value: 5,  sub: "2 overdue",                subColor: "#EF4444", icon: "solar:checklist-minimalistic-bold",   iconColor: "#F59E0B" },
+  { label: "WATCHLIST",         value: 12, sub: "4 active signals",         subColor: "#6366F1", icon: "solar:bookmark-bold",                 iconColor: "#8B5CF6" },
+];
+
+const QUEUE_ITEMS = [
+  { name: "Clari — Follow up on intent signal",    overdue: false },
+  { name: "Clearbit — Send pricing deck",          overdue: true  },
+  { name: "Lattice — Schedule discovery call",     overdue: false },
+  { name: "Gong — Connect with new CRO",           overdue: true  },
+];
+
+const FILTER_TABS: { key: "all" | SignalType; label: string }[] = [
+  { key: "all",            label: "All"     },
+  { key: "new_funding",    label: "Funding" },
+  { key: "intent_surge",   label: "Intent"  },
+  { key: "hiring_surge",   label: "Hiring"  },
+];
+
+const SIGNAL_META: Record<string, { label: string; color: string; bg: string }> = {
+  new_funding:       { label: "NEW FUNDING",   color: "var(--si-signal-funding)",    bg: "rgba(217,119,6,0.1)"   },
+  intent_surge:      { label: "INTENT SURGE",  color: "var(--si-signal-intent)",     bg: "rgba(124,58,237,0.1)"  },
+  hiring_surge:      { label: "HIRING SURGE",  color: "var(--si-signal-hiring)",     bg: "rgba(37,99,235,0.1)"   },
+  tech_change:       { label: "TECH CHANGE",   color: "var(--si-signal-tech)",       bg: "rgba(5,150,105,0.1)"   },
+  leadership_change: { label: "LEADERSHIP",    color: "var(--si-signal-leadership)", bg: "rgba(219,39,119,0.1)"  },
+  expansion:         { label: "EXPANSION",     color: "var(--si-signal-expansion)",  bg: "rgba(234,88,12,0.1)"   },
+};
+
+const CTA_BUTTON: Record<string, React.CSSProperties> = {
+  funding: { background: "rgba(217,119,6,0.08)",  color: "var(--si-signal-funding)",  border: "1px solid rgba(217,119,6,0.2)"  },
+  intent:  { background: "rgba(124,58,237,0.08)", color: "var(--si-signal-intent)",   border: "1px solid rgba(124,58,237,0.2)" },
+  hiring:  { background: "rgba(37,99,235,0.08)",  color: "var(--si-signal-hiring)",   border: "1px solid rgba(37,99,235,0.2)"  },
+};
+
+// Deterministic urgency from signal id
+function urgencyFromId(id: string): number {
+  const n = id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return (n % 3) + 3; // 3-5
 }
+
+function daysAgoLabel(iso: string) {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return d === 0 ? "Today" : d === 1 ? "1d ago" : `${d}d ago`;
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function UrgencyDots({ level }: { level: number }) {
+  return (
+    <div className="flex items-center gap-[3px]">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            width: 7, height: 7,
+            borderRadius: "50%",
+            backgroundColor: i <= level ? "var(--si-signal-funding)" : "var(--si-card-border)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AccountInitialBadge({ name, domain, size = 32 }: { name: string; domain?: string; size?: number }) {
+  const colors = ["#6366F1", "#7C3AED", "#2563EB", "#059669", "#D97706", "#DB2777"];
+  const idx = name.charCodeAt(0) % colors.length;
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (domain && !imgFailed) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #E5E7EB", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img
+          src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
+          alt={name}
+          style={{ width: size * 0.6, height: size * 0.6, objectFit: "contain" }}
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: size, height: size,
+        borderRadius: "50%",
+        backgroundColor: colors[idx],
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontWeight: 700,
+        fontSize: size * 0.4,
+        color: "#fff",
+        flexShrink: 0,
+        letterSpacing: "-0.01em",
+      }}
+    >
+      {name.slice(0, 1).toUpperCase()}
+    </div>
+  );
+}
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export default function SIDashboard() {
   const navigate = useNavigate();
-  const { profile, watchedAccounts, addWatchedAccount } = useUserProfileStore();
-  const [demoBannerDismissed, setDemoBannerDismissed] = useState(false);
+  const { watchedAccounts } = useUserProfileStore();
   const [signalFilter, setSignalFilter] = useState<"all" | SignalType>("all");
-  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const heroAccount = useMemo(
+    () => MORNING_BRIEF_ACCOUNTS[Math.floor(Math.random() * MORNING_BRIEF_ACCOUNTS.length)],
+    []
+  );
 
-  const name = profile?.name ?? "";
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
-  })();
-
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long", month: "long", day: "numeric",
-  });
-
-  const signalsThisWeek = countSignalsInWindow(7);
-  const signalsLastWeek = countSignalsInWindow(14) - signalsThisWeek;
-  const signalDelta = signalsThisWeek - signalsLastWeek;
-  const deltaText = `${signalDelta >= 0 ? "+" : ""}${signalDelta} vs last week`;
-
-  const demoAccountIds = new Set(DEMO_ACCOUNTS.map((a) => a.id));
-  const isDemoMode = watchedAccounts.length > 0 && watchedAccounts.every((a) => demoAccountIds.has(a.id));
-  const watchedAccountIds = new Set(watchedAccounts.map((a) => a.id));
-
-  const sortedSignals = [...MOCK_SIGNALS]
+  const filteredSignals = [...MOCK_SIGNALS]
     .sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime())
-    .filter((s) => {
-      if (signalFilter !== "all" && s.type !== signalFilter) return false;
-      if (searchQuery) {
-        const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === s.accountId);
-        const q = searchQuery.toLowerCase();
-        if (!account?.accountName.toLowerCase().includes(q) && !account?.domain.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
+    .filter((s) => signalFilter === "all" || s.type === signalFilter);
+
+  const watchlistCount = watchedAccounts.length || 12;
+
+  // ── Shared token shorthands
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: "var(--si-card-bg)",
+    border: "1px solid var(--si-card-border)",
+    borderRadius: 12,
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    color: "var(--si-text-muted)",
+  };
+
+  const displayFont: React.CSSProperties = {
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  };
 
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Top header */}
-      <div className="sticky top-0 z-10 border-b px-6 py-3.5 flex items-center justify-between" style={{ backgroundColor: "var(--si-card-bg)", borderColor: "var(--si-card-border)" }}>
+    <div style={{ backgroundColor: "var(--si-bg)", minHeight: "100%" }}>
+
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <div
+        className="sticky top-0 z-10 flex items-center justify-between px-6 py-3"
+        style={{ backgroundColor: "var(--si-card-bg)", borderBottom: "1px solid var(--si-card-border)" }}
+      >
         <div>
-          <h1 className="text-base font-semibold text-gray-900">{greeting}{name ? `, ${name.split(" ")[0]}` : ""}</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{today}</p>
+          <p style={{ ...displayFont, fontSize: 15, fontWeight: 700, color: "var(--si-text-primary)" }}>
+            My Dashboard
+          </p>
+          <p style={{ fontSize: 11, color: "var(--si-text-muted)", marginTop: 1 }}>{today}</p>
         </div>
-        <button
-          onClick={() => navigate("/si/icp")}
-          className="flex items-center gap-1.5 text-xs font-semibold text-white rounded-md px-3 py-2 transition-colors"
-          style={{ backgroundColor: "var(--si-primary)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary)")}
-        >
-          <Icon icon="solar:add-circle-linear" width={14} />
-          Add Accounts
-        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Watchlist pill */}
+          <button
+            onClick={() => navigate("/si/watchlist")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              fontSize: 12, fontWeight: 600,
+              padding: "6px 12px", borderRadius: 8,
+              border: "1px solid var(--si-card-border)",
+              color: "var(--si-text-secondary)",
+              backgroundColor: "var(--si-card-bg)",
+              cursor: "pointer",
+            }}
+          >
+            <Icon icon="solar:bookmark-linear" width={13} />
+            Watchlist
+            <span
+              style={{
+                fontSize: 10, fontWeight: 700,
+                padding: "1px 6px", borderRadius: 20,
+                backgroundColor: "var(--si-primary)", color: "#fff",
+              }}
+            >
+              {watchlistCount}
+            </span>
+          </button>
+
+          {/* Search box */}
+          <button
+            onClick={() => navigate("/si/search")}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              fontSize: 12, color: "var(--si-text-muted)",
+              padding: "6px 14px", borderRadius: 8, width: 210,
+              border: "1px solid var(--si-card-border)",
+              backgroundColor: "var(--si-card-bg)", cursor: "pointer",
+            }}
+          >
+            <Icon icon="solar:magnifer-linear" width={13} />
+            Search accounts, contacts...
+          </button>
+
+          {/* Bell */}
+          <button style={{ position: "relative", padding: 6, color: "var(--si-text-muted)", background: "none", border: "none", cursor: "pointer" }}>
+            <Icon icon="solar:bell-linear" width={18} />
+            <span style={{ position: "absolute", top: 5, right: 5, width: 7, height: 7, borderRadius: "50%", backgroundColor: "var(--si-primary)" }} />
+          </button>
+
+          {/* Add Account */}
+          <button
+            onClick={() => navigate("/si/icp")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              fontSize: 12, fontWeight: 600,
+              padding: "6px 14px", borderRadius: 8,
+              backgroundColor: "var(--si-primary)", color: "#fff", border: "none", cursor: "pointer",
+            }}
+          >
+            <Icon icon="solar:add-circle-linear" width={13} />
+            Add Account
+          </button>
+        </div>
       </div>
 
-      {/* Page body */}
-      <div className="flex gap-5 p-6 flex-1">
-        {/* Left: main */}
-        <div className="flex-1 min-w-0 flex flex-col gap-5">
+      {/* ── Body ────────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", gap: 20, padding: "20px 24px", alignItems: "flex-start" }}>
 
-          {/* Demo banner */}
-          {isDemoMode && !demoBannerDismissed && (
-            <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Icon icon="solar:info-circle-linear" width={15} className="text-indigo-500 flex-shrink-0" />
-                <p className="text-sm text-indigo-700">These are demo accounts. Add your real accounts to get live signals.</p>
-              </div>
-              <button onClick={() => setDemoBannerDismissed(true)} className="text-indigo-400 hover:text-indigo-600 ml-3 flex-shrink-0">
-                <Icon icon="solar:close-circle-linear" width={16} />
-              </button>
-            </div>
-          )}
+        {/* LEFT: main column */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* Summary cards */}
-          <div className="grid grid-cols-4 gap-3">
-            <SummaryCard label="Accounts Watched" value={watchedAccounts.length} delta={3} deltaLabel="added this week" icon="solar:buildings-2-bold" iconColor="#6366F1" />
-            <SummaryCard label="Signals This Week" value={signalsThisWeek} delta={signalDelta} deltaLabel="vs last week" icon="solar:pulse-2-bold" iconColor="#10B981" />
-            <SummaryCard label="Active Playbooks" value={Object.keys(MOCK_PLAYBOOKS).length} delta={1} deltaLabel="opened this week" icon="solar:document-text-bold" iconColor="#F59E0B" />
-            <SummaryCard label="ICP Match Score" value="78%" delta={4} deltaLabel="since last update" icon="solar:target-bold" iconColor="#8B5CF6" />
+          {/* HERO BANNER */}
+          <div
+            style={{
+              borderRadius: 14,
+              padding: "24px 28px",
+              background: "linear-gradient(135deg, #080D1A 0%, #0F0A2E 50%, #111827 100%)",
+              border: "1px solid rgba(99,102,241,0.18)",
+              boxShadow: "0 0 40px rgba(99,102,241,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+              position: "relative",
+            }}
+          >
+            {/* Subtle glow orb — clipped to its own layer, never overlaps text */}
+            <div style={{
+              position: "absolute", top: 0, right: 0, bottom: 0,
+              width: 220, borderRadius: "0 14px 14px 0",
+              background: "radial-gradient(ellipse at top right, rgba(99,102,241,0.12) 0%, transparent 65%)",
+              pointerEvents: "none", zIndex: 0,
+            }} />
+            <p
+              style={{
+                ...displayFont,
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#fff",
+                lineHeight: 1.35,
+                letterSpacing: "-0.02em",
+                position: "relative",
+              }}
+            >
+              You have a{" "}
+              <em
+                style={{
+                  fontFamily: "'Instrument Serif', Georgia, serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: 26,
+                  background: "linear-gradient(90deg, #A5B4FC, #818CF8)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                3-day window
+              </em>
+              {" "}on{" "}
+              <span style={{ color: "#E0E7FF", fontWeight: 800 }}>{heroAccount.name}.</span>
+            </p>
+            <p style={{ fontSize: 13, color: "#6B7DB3", marginTop: 8, lineHeight: 1.55, position: "relative" }}>
+              Intent surge started 8 days ago — buying windows like this typically close in 10–12 days.
+            </p>
+            <button
+              onClick={() => navigate(`/si/playbook/${heroAccount.id}`)}
+              style={{
+                marginTop: 16,
+                position: "relative",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 16px",
+                borderRadius: 999,
+                background: "linear-gradient(135deg, #6366F1, #818CF8)",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "0.01em",
+              }}
+            >
+              View Opp Playbook
+              <Icon icon="solar:arrow-right-linear" width={13} />
+            </button>
           </div>
 
-          {/* Signal feed */}
-          <div className="flex flex-col gap-3">
-            {/* Feed header + filters */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-800">Latest Signals</h2>
-              <span className="text-xs text-gray-400">{sortedSignals.length} signals</span>
+          {/* AI MORNING BRIEF */}
+          <div style={cardStyle}>
+            {/* Card header */}
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "14px 20px 12px",
+                borderBottom: "1px solid var(--si-card-border)",
+              }}
+            >
+              <div
+                style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15))",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#A5B4FC" }} />
+              </div>
+              <span style={labelStyle}>✦ AI Morning Brief · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}</span>
             </div>
 
-            {/* Filter bar */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Icon icon="solar:magnifer-linear" width={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search accounts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 pr-3 py-1.5 text-xs border border-[--si-card-border] rounded-md focus:outline-none focus:border-indigo-400 w-44 bg-transparent text-[--si-text-primary]"
-                />
+            <div style={{ padding: "14px 20px 16px" }}>
+              <p
+                style={{
+                  ...displayFont,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "var(--si-primary)",
+                  marginBottom: 14,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                3 accounts in your book are in active buying motion.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {MORNING_BRIEF_ACCOUNTS.map((acct, i) => (
+                  <div
+                    key={acct.id}
+                    style={{
+                      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+                      padding: "11px 0",
+                      borderBottom: i < MORNING_BRIEF_ACCOUNTS.length - 1 ? "1px solid var(--si-card-border)" : "none",
+                    }}
+                  >
+                    <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--si-text-secondary)", flex: 1 }}>
+                      <span style={{ ...displayFont, fontWeight: 700, color: "var(--si-text-primary)" }}>{acct.name}</span>
+                      {" — "}
+                      {acct.context}
+                    </p>
+                    <button
+                      style={{
+                        ...CTA_BUTTON[acct.ctaStyle],
+                        ...displayFont,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "5px 12px",
+                        borderRadius: 7,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      {acct.cta}
+                    </button>
+                  </div>
+                ))}
               </div>
-
-              {/* Signal type dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setFilterDropdownOpen((o) => !o)}
-                  className="flex items-center gap-1.5 text-xs font-medium border border-[--si-card-border] rounded-md px-3 py-1.5 hover:bg-white/5 transition-colors"
-                  style={signalFilter !== "all" ? { borderColor: "var(--si-primary)", color: "var(--si-primary)", backgroundColor: "var(--si-card-bg)" } : { color: "#4B5563", backgroundColor: "var(--si-card-bg)" }}
-                >
-                  <Icon icon="solar:filter-linear" width={13} />
-                  {signalFilter === "all" ? "Signal type" : SIGNAL_TYPES[signalFilter].label}
-                  <Icon icon={filterDropdownOpen ? "solar:alt-arrow-up-linear" : "solar:alt-arrow-down-linear"} width={11} />
-                </button>
-
-                {filterDropdownOpen && (
-                  <>
-                    {/* Backdrop */}
-                    <div className="fixed inset-0 z-10" onClick={() => setFilterDropdownOpen(false)} />
-                    {/* Dropdown */}
-                    <div className="absolute left-0 top-full mt-1.5 z-20 border border-[--si-card-border] rounded-lg shadow-lg py-1 min-w-[160px]" style={{ backgroundColor: "var(--si-card-bg)" }}>
-                      <button
-                        onClick={() => { setSignalFilter("all"); setFilterDropdownOpen(false); }}
-                        className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-white/5 transition-colors ${signalFilter === "all" ? "text-indigo-600" : "text-[--si-text-secondary]"}`}
-                      >
-                        {signalFilter === "all" && <Icon icon="solar:check-circle-bold" width={13} className="text-indigo-600" />}
-                        <span className={signalFilter !== "all" ? "ml-[17px]" : ""}>All signals</span>
-                      </button>
-                      <div className="border-t border-gray-100 my-1" />
-                      {(Object.keys(SIGNAL_TYPES) as SignalType[]).map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => { setSignalFilter(type); setFilterDropdownOpen(false); }}
-                          className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-white/5 transition-colors ${signalFilter === type ? "text-indigo-600" : "text-[--si-text-secondary]"}`}
-                        >
-                          {signalFilter === type
-                            ? <Icon icon="solar:check-circle-bold" width={13} className="text-indigo-600" />
-                            : <span className="w-[13px] h-[13px] rounded-full inline-block flex-shrink-0" style={{ backgroundColor: SIGNAL_TYPES[type].color + "33" }} />
-                          }
-                          {SIGNAL_TYPES[type].label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {signalFilter !== "all" && (
-                <button
-                  onClick={() => setSignalFilter("all")}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
-                >
-                  <Icon icon="solar:close-circle-linear" width={13} />
-                  Clear
-                </button>
-              )}
             </div>
+          </div>
 
-            {/* Signal list */}
-            {sortedSignals.length === 0 ? (
-              <div className="rounded-lg border border-[--si-card-border] p-8 text-center" style={{ backgroundColor: "var(--si-card-bg)" }}>
-                <Icon icon="solar:radar-linear" width={32} className="text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">No signals match your filters.</p>
+          {/* STATS ROW */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+            {STATS.map((s) => (
+              <div
+                key={s.label}
+                style={{
+                  ...cardStyle,
+                  padding: "16px 18px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Subtle top accent bar */}
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                  background: `linear-gradient(90deg, ${s.iconColor}44, transparent)`,
+                  borderRadius: "12px 12px 0 0",
+                }} />
+                <p style={labelStyle}>{s.label}</p>
+                <p
+                  style={{
+                    ...displayFont,
+                    fontSize: 36,
+                    fontWeight: 800,
+                    letterSpacing: "-0.04em",
+                    lineHeight: 1,
+                    color: "var(--si-text-primary)",
+                    margin: "10px 0 8px",
+                  }}
+                >
+                  {s.value}
+                </p>
+                <p style={{ fontSize: 11, fontWeight: 500, color: s.subColor }}>
+                  {s.sub}
+                </p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {sortedSignals.map((signal) => {
-                  const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === signal.accountId);
-                  if (!account) return null;
+            ))}
+          </div>
+
+          {/* PRIORITY SIGNALS */}
+          <div>
+            {/* Section header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#F59E0B", display: "inline-block" }} />
+                <span style={labelStyle}>Priority Signals</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {/* Filter tabs */}
+                {FILTER_TABS.map((tab) => {
+                  const active = signalFilter === tab.key;
+                  const count = tab.key === "all"
+                    ? MOCK_SIGNALS.length
+                    : MOCK_SIGNALS.filter((s) => s.type === tab.key).length;
                   return (
-                    <SignalFeedCard
-                      key={signal.id}
-                      signal={signal}
-                      accountName={account.accountName}
-                      accountDomain={account.domain}
-                      onViewPlaybook={() => navigate(`/si/playbook/${signal.accountId}`)}
-                      onAddToWatchlist={!watchedAccountIds.has(account.id) ? () => addWatchedAccount(account) : undefined}
-                      isWatched={watchedAccountIds.has(account.id)}
-                    />
+                    <button
+                      key={tab.key}
+                      onClick={() => setSignalFilter(tab.key)}
+                      style={{
+                        ...displayFont,
+                        fontSize: 11, fontWeight: 600,
+                        padding: "4px 10px", borderRadius: 20, cursor: "pointer",
+                        transition: "all 0.15s",
+                        ...(active
+                          ? { backgroundColor: "var(--si-primary)", color: "#fff", border: "1px solid transparent" }
+                          : { backgroundColor: "var(--si-card-bg)", color: "var(--si-text-secondary)", border: "1px solid var(--si-card-border)" }
+                        ),
+                      }}
+                    >
+                      {tab.label}
+                      {tab.key === "all" && (
+                        <span
+                          style={{
+                            marginLeft: 5, fontSize: 10, fontWeight: 700,
+                            padding: "0px 5px", borderRadius: 10,
+                            backgroundColor: active ? "rgba(255,255,255,0.2)" : "var(--si-bg)",
+                            color: active ? "#fff" : "var(--si-text-muted)",
+                          }}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
+                <button
+                  onClick={() => navigate("/si/signals")}
+                  style={{ ...displayFont, fontSize: 12, fontWeight: 600, color: "var(--si-primary)", background: "none", border: "none", cursor: "pointer", marginLeft: 4 }}
+                >
+                  View all →
+                </button>
               </div>
-            )}
+            </div>
+
+            {/* Signal cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {filteredSignals.map((signal) => {
+                const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === signal.accountId);
+                if (!account) return null;
+                const meta = SIGNAL_META[signal.type] ?? { label: signal.type, color: "#6366F1", bg: "rgba(99,102,241,0.1)" };
+                const urgency = urgencyFromId(signal.id);
+
+                return (
+                  <div
+                    key={signal.id}
+                    style={{
+                      ...cardStyle,
+                      padding: "14px 18px",
+                      transition: "border-color 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--si-card-border)")}
+                  >
+                    {/* Top row */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
+                        <AccountInitialBadge name={account.accountName} domain={account.domain} size={34} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <span style={{ ...displayFont, fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)" }}>
+                              {account.accountName}
+                            </span>
+                            <span style={{ fontSize: 11, color: "var(--si-text-muted)" }}>{account.domain}</span>
+                            <span
+                              style={{
+                                ...displayFont,
+                                fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
+                                padding: "2px 7px", borderRadius: 5,
+                                backgroundColor: meta.bg, color: meta.color,
+                              }}
+                            >
+                              {meta.label}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, lineHeight: 1.6, color: "var(--si-text-secondary)", marginTop: 5 }}>
+                            <span style={{ fontWeight: 600, color: "var(--si-text-primary)" }}>{signal.headline}. </span>
+                            {signal.summary}
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--si-text-muted)", flexShrink: 0, marginTop: 2 }}>
+                        {daysAgoLabel(signal.detectedAt)}
+                      </span>
+                    </div>
+
+                    {/* Bottom row */}
+                    <div
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        marginTop: 12, paddingTop: 10,
+                        borderTop: "1px solid var(--si-card-border)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button
+                          onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 5,
+                            ...displayFont, fontSize: 11, fontWeight: 700,
+                            padding: "5px 12px", borderRadius: 7, cursor: "pointer",
+                            backgroundColor: "rgba(99,102,241,0.08)",
+                            color: "var(--si-primary)",
+                            border: "1px solid rgba(99,102,241,0.18)",
+                          }}
+                        >
+                          <Icon icon="solar:letter-linear" width={11} />
+                          Draft outreach
+                        </button>
+                        <button
+                          onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 5,
+                            ...displayFont, fontSize: 11, fontWeight: 600,
+                            padding: "5px 12px", borderRadius: 7, cursor: "pointer",
+                            backgroundColor: "var(--si-bg)",
+                            color: "var(--si-text-secondary)",
+                            border: "1px solid var(--si-card-border)",
+                          }}
+                        >
+                          <Icon icon="solar:document-text-linear" width={11} />
+                          View playbook
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 10, color: "var(--si-text-muted)", fontWeight: 500 }}>Urgency</span>
+                        <UrgencyDots level={urgency} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Right panel */}
-        <div className="w-[260px] flex-shrink-0 flex flex-col gap-3">
-          <ICPSummaryPanel />
-          <TopAccountsPanel />
+        {/* ── RIGHT SIDEBAR ─────────────────────────────────────────────── */}
+        <div style={{ width: 296, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, position: "sticky", top: 57 }}>
+
+          {/* Best Call Card */}
+          <div
+            style={{
+              borderRadius: 14,
+              overflow: "hidden",
+              border: "1px solid var(--si-card-border)",
+              backgroundColor: "var(--si-card-bg)",
+            }}
+          >
+            {/* Top gradient strip */}
+            <div
+              style={{
+                padding: "16px 18px 0",
+                background: "linear-gradient(160deg, rgba(99,102,241,0.06) 0%, transparent 60%)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: 6,
+                  backgroundColor: "rgba(99,102,241,0.12)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Icon icon="solar:phone-calling-bold" width={11} style={{ color: "var(--si-primary)" }} />
+                </div>
+                <span style={labelStyle}>Best call to make today</span>
+              </div>
+
+              <p style={{ ...displayFont, fontSize: 15, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
+                Clearbit — Marcus Holt,{" "}
+                <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>VP Engineering</span>
+              </p>
+
+              <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)", marginTop: 8, paddingBottom: 14 }}>
+                Buying committee active for 8 days. Vendor evaluation window closes in ~3 days. You haven't spoken since April 12.
+              </p>
+            </div>
+
+            <div style={{ padding: "0 18px 16px" }}>
+              <button
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  ...displayFont, fontSize: 12, fontWeight: 700,
+                  padding: "9px 16px", borderRadius: 8, cursor: "pointer",
+                  backgroundColor: "var(--si-primary)", color: "#fff", border: "none",
+                  boxShadow: "0 2px 12px rgba(99,102,241,0.3)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--si-primary)")}
+              >
+                <Icon icon="solar:letter-bold" width={13} />
+                Draft outreach now
+              </button>
+            </div>
+
+            {/* Queue */}
+            <div
+              style={{
+                borderTop: "1px solid var(--si-card-border)",
+                padding: "14px 18px 16px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={labelStyle}>Your queue · {QUEUE_ITEMS.length} open</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#EF4444" }}>2 overdue</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {QUEUE_ITEMS.map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: "50%", marginTop: 4, flexShrink: 0,
+                      backgroundColor: item.overdue ? "#EF4444" : "var(--si-text-muted)",
+                    }} />
+                    <span style={{ fontSize: 12, lineHeight: 1.45, color: item.overdue ? "#EF4444" : "var(--si-text-secondary)" }}>
+                      {item.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   );
