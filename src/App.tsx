@@ -12,15 +12,20 @@ import SISearch from "./pages/si/SISearch";
 import SIPlaybook from "./pages/si/SIPlaybook";
 import SISearchPeopleResults from "./pages/si/SISearchPeopleResults";
 import SISearchCompanyResults from "./pages/si/SISearchCompanyResults";
+import SISearchResults from "./pages/si/SISearchResults";
 import SIPersonPlaybook from "./pages/si/SIPersonPlaybook";
 import SIMcp from "./pages/si/SIMcp";
+import SIMarketIntelligence from "./pages/si/SIMarketIntelligence";
+import SIIntegrations from "./pages/si/SIIntegrations";
 import SIOnboarding from "./pages/si/SIOnboarding";
 import SILanding from "./pages/si/SILanding";
 import SISignUp from "./pages/si/SISignUp";
 import SISignIn from "./pages/si/SISignIn";
+import OnboardingIntegrations from "./pages/OnboardingIntegrations";
 import Dashboard from "./pages/Dashboard";
 import TalentDashboard from "./pages/TalentDashboard";
 import Search from "./pages/Search";
+import SearchResults from "./pages/SearchResults";
 import SearchLanding from "./pages/SearchLanding";
 import UnifiedFilters from "./pages/UnifiedFilters";
 import Insights from "./pages/Insights";
@@ -67,6 +72,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/talent" element={<TalentDashboard />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/search/results" element={<SearchResults />} />
             <Route path="/search-old" element={<SearchLanding />} />
             <Route path="/unified-filters" element={<UnifiedFilters />} />
             <Route path="/insights" element={<Insights />} />
@@ -104,6 +110,7 @@ const App = () => (
           {/* Standalone admin routes — no AppLayout wrapper */}
           <Route path="/admin/campaign-calendar" element={<AdminCampaignCalendar />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/onboarding/integrations" element={<OnboardingIntegrations />} />
           {/* SI Product Routes */}
           <Route path="/si/onboarding" element={<SIOnboarding />} />
           <Route path="/landing" element={<SILanding />} />
@@ -113,14 +120,17 @@ const App = () => (
             <Route path="/si" element={<Navigate to="/si/dashboard" replace />} />
             <Route path="/si/dashboard" element={<SIDashboard />} />
             <Route path="/si/search" element={<SISearch />} />
+            <Route path="/si/search/results" element={<SISearchResults />} />
             <Route path="/si/search/results/people" element={<SISearchPeopleResults />} />
             <Route path="/si/search/results/companies" element={<SISearchCompanyResults />} />
-            <Route path="/si/icp" element={<SIICPDiscovery />} />
+            <Route path="/si/icp" element={<Navigate to="/si/search" replace />} />
             <Route path="/si/watchlist" element={<SIWatchlist />} />
             <Route path="/si/playbook/person/:personId" element={<SIPersonPlaybook />} />
             <Route path="/si/playbook/:accountId" element={<SIPlaybook />} />
             <Route path="/si/playbook" element={<SIPlaybook />} />
             <Route path="/si/mcp" element={<SIMcp />} />
+            <Route path="/si/market-intelligence" element={<SIMarketIntelligence />} />
+            <Route path="/si/integrations" element={<SIIntegrations />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

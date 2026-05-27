@@ -6,19 +6,19 @@ import logo from "@/assets/pristine-data-logo.svg";
 
 const NAV_SECTIONS = [
   {
-    label: "INTELLIGENCE",
+    label: "SALES CO-PILOT",
     items: [
       { label: "Dashboard", route: "/si/dashboard", icon: "solar:home-2-linear", activeIcon: "solar:home-2-bold" },
-      { label: "Search", route: "/si/search", icon: "solar:magnifer-linear", activeIcon: "solar:magnifer-bold" },
-      { label: "ICP Discovery", route: "/si/icp", icon: "solar:target-linear", activeIcon: "solar:target-bold" },
-      { label: "Watchlist", route: "/si/watchlist", icon: "solar:bell-bing-linear", activeIcon: "solar:bell-bing-bold" },
       { label: "Playbook", route: "/si/playbook", icon: "solar:notebook-bookmark-linear", activeIcon: "solar:notebook-bookmark-bold" },
+      { label: "Watchlist", route: "/si/watchlist", icon: "solar:bell-bing-linear", activeIcon: "solar:bell-bing-bold" },
+      { label: "Search", route: "/si/search", icon: "solar:magnifer-linear", activeIcon: "solar:magnifer-bold" },
     ],
   },
   {
     label: "SETTINGS",
     items: [
       { label: "Settings", route: "/si/mcp", icon: "solar:settings-linear", activeIcon: "solar:settings-bold" },
+      { label: "Integrations", route: "/si/integrations", icon: "solar:link-circle-linear", activeIcon: "solar:link-circle-bold" },
     ],
   },
 ];
