@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type Category = "All" | "CRM" | "Email" | "Calendar" | "Messaging";
-type CrmProvider = "salesforce" | "hubspot";
 
 interface Integration {
   id: string;
@@ -35,13 +34,22 @@ const INTEGRATIONS: Integration[] = [
     brandBg: "bg-red-50",
   },
   {
-    id: "crm",
-    name: "CRM",
+    id: "salesforce",
+    name: "Salesforce",
     category: "CRM",
     description: "Bi-directional sync of accounts, contacts, and opportunities.",
     badge: "Recommended",
     icon: "logos:salesforce",
     brandBg: "bg-blue-50",
+  },
+  {
+    id: "hubspot",
+    name: "HubSpot",
+    category: "CRM",
+    description: "Bi-directional sync of accounts, contacts, and opportunities.",
+    badge: "Recommended",
+    icon: "logos:hubspot",
+    brandBg: "bg-orange-50",
   },
   {
     id: "gcal",
@@ -104,8 +112,6 @@ interface IntegrationCardProps {
   integration: Integration;
   connected: boolean;
   disconnectConfirm: boolean;
-  crmSelection?: CrmProvider;
-  onCrmChange?: (v: CrmProvider) => void;
   onConnect: () => void;
   onDisconnectRequest: () => void;
   onDisconnectConfirm: () => void;
@@ -116,17 +122,11 @@ function IntegrationCard({
   integration,
   connected,
   disconnectConfirm,
-  crmSelection,
-  onCrmChange,
   onConnect,
   onDisconnectRequest,
   onDisconnectConfirm,
   onDisconnectCancel,
 }: IntegrationCardProps) {
-  const isCrm = integration.id === "crm";
-  const cardIcon = isCrm && crmSelection === "hubspot" ? "logos:hubspot" : integration.icon;
-  const cardBrandBg = isCrm && crmSelection === "hubspot" ? "bg-orange-50" : integration.brandBg;
-
   return (
     <div
       className={cn(
@@ -136,8 +136,8 @@ function IntegrationCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0", cardBrandBg)}>
-          <Icon icon={cardIcon} className="h-7 w-7" />
+        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0", integration.brandBg)}>
+          <Icon icon={integration.icon} className="h-7 w-7" />
         </div>
         <StatusBadge connected={connected} badge={integration.badge} />
       </div>
@@ -146,25 +146,6 @@ function IntegrationCard({
         <p className="font-bold text-base text-gray-900 mb-1">{integration.name}</p>
         <p className="text-sm text-gray-500 leading-relaxed">{integration.description}</p>
       </div>
-
-      {isCrm && !connected && (
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
-          {(["salesforce", "hubspot"] as CrmProvider[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => onCrmChange?.(p)}
-              className={cn(
-                "flex-1 py-1.5 capitalize transition-colors duration-150",
-                crmSelection === p
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-500 hover:bg-gray-50"
-              )}
-            >
-              {p === "salesforce" ? "Salesforce" : "HubSpot"}
-            </button>
-          ))}
-        </div>
-      )}
 
       {disconnectConfirm ? (
         <div className="space-y-2">
@@ -294,16 +275,16 @@ export default function SIIntegrations() {
   const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [crmSelection, setCrmSelection] = useState<CrmProvider>("salesforce");
   const [disconnectConfirm, setDisconnectConfirm] = useState<string | null>(null);
   const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set());
 
   const isConnected = (id: string) => connectedIds.has(id);
-  const allRecommendedConnected = isConnected("gmail") && isConnected("crm");
+  const crmConnected = isConnected("salesforce") || isConnected("hubspot");
+  const allRecommendedConnected = isConnected("gmail") && crmConnected;
   const showBanner =
     !bannerDismissed &&
     !allRecommendedConnected &&
-    (connectedIds.size === 0 || !isConnected("crm"));
+    (connectedIds.size === 0 || !crmConnected);
   const bannerVariant: "zero" | "partial" = connectedIds.size === 0 ? "zero" : "partial";
 
   const filteredIntegrations =
@@ -313,12 +294,8 @@ export default function SIIntegrations() {
 
   const handleConnect = (id: string) => {
     setConnectedIds((prev) => new Set([...prev, id]));
-    const integration = INTEGRATIONS.find((i) => i.id === id);
-    const displayName =
-      id === "crm"
-        ? crmSelection === "salesforce" ? "Salesforce" : "HubSpot"
-        : integration?.name ?? id;
-    toast.success(`${displayName} connected successfully.`);
+    const name = INTEGRATIONS.find((i) => i.id === id)?.name ?? id;
+    toast.success(`${name} connected successfully.`);
   };
 
   const handleDisconnectConfirm = (id: string) => {
@@ -393,8 +370,6 @@ export default function SIIntegrations() {
                     integration={integration}
                     connected={isConnected(integration.id)}
                     disconnectConfirm={disconnectConfirm === integration.id}
-                    crmSelection={integration.id === "crm" ? crmSelection : undefined}
-                    onCrmChange={integration.id === "crm" ? setCrmSelection : undefined}
                     onConnect={() => handleConnect(integration.id)}
                     onDisconnectRequest={() => setDisconnectConfirm(integration.id)}
                     onDisconnectConfirm={() => handleDisconnectConfirm(integration.id)}
