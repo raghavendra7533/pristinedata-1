@@ -21,6 +21,7 @@ interface ComingSoonIntegration {
   name: string;
   icon: string;
   brandBg: string;
+  contactUs?: boolean;
 }
 
 const INTEGRATIONS: Integration[] = [
@@ -78,7 +79,7 @@ const INTEGRATIONS: Integration[] = [
 ];
 
 const COMING_SOON: ComingSoonIntegration[] = [
-  { id: "outreach", name: "Outreach", icon: "solar:mailbox-bold", brandBg: "bg-violet-50" },
+  { id: "outreach", name: "Outreach", icon: "solar:mailbox-bold", brandBg: "bg-violet-50", contactUs: true },
   { id: "hubspot-seq", name: "HubSpot Sequences", icon: "logos:hubspot", brandBg: "bg-orange-50" },
   { id: "li-nav", name: "LinkedIn Sales Navigator", icon: "logos:linkedin-icon", brandBg: "bg-blue-50" },
 ];
@@ -214,24 +215,41 @@ function ComingSoonCard({
         </span>
       </div>
 
-      <p className="font-bold text-base text-gray-900">{integration.name}</p>
-
-      <Button
-        size="sm"
-        variant="outline"
-        className="w-full h-9 text-sm transition-colors duration-200"
-        onClick={onNotify}
-        disabled={notified}
-      >
-        {notified ? (
-          <>
-            <Icon icon="solar:check-circle-bold" className="h-4 w-4 mr-2 text-emerald-600" />
-            You'll be notified
-          </>
-        ) : (
-          "Notify me"
+      <div>
+        <p className="font-bold text-base text-gray-900">{integration.name}</p>
+        {integration.contactUs && (
+          <p className="text-xs text-gray-400 mt-1">Already using Outreach? We can connect it with our demand gen product.</p>
         )}
-      </Button>
+      </div>
+
+      {integration.contactUs ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full h-9 text-sm border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-colors duration-200"
+          onClick={() => toast("Our team will reach out to get you set up.")}
+        >
+          <Icon icon="solar:chat-round-call-linear" className="h-4 w-4 mr-2" />
+          Contact us
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full h-9 text-sm transition-colors duration-200"
+          onClick={onNotify}
+          disabled={notified}
+        >
+          {notified ? (
+            <>
+              <Icon icon="solar:check-circle-bold" className="h-4 w-4 mr-2 text-emerald-600" />
+              You'll be notified
+            </>
+          ) : (
+            "Notify me"
+          )}
+        </Button>
+      )}
     </div>
   );
 }
