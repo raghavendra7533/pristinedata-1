@@ -1,397 +1,462 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Icon } from "@iconify/react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ManageIntegrationSheet } from "@/components/integrations/ManageIntegrationSheet";
+import { toast } from "sonner";
 
-const activeIntegrations = [
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Category = "All" | "CRM" | "Email" | "Calendar" | "Messaging";
+type CrmProvider = "salesforce" | "hubspot";
+
+interface Integration {
+  id: string;
+  name: string;
+  category: Exclude<Category, "All">;
+  description: string;
+  badge?: "Recommended";
+  icon: string;
+  brandBg: string;
+}
+
+interface ComingSoonIntegration {
+  id: string;
+  name: string;
+  icon: string;
+  brandBg: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const INTEGRATIONS: Integration[] = [
   {
-    id: "sf",
-    name: "Salesforce",
+    id: "gmail",
+    name: "Gmail",
+    category: "Email",
+    description: "Sync email threads and auto-enrich contact activity from your inbox.",
+    badge: "Recommended",
+    icon: "logos:google-gmail",
+    brandBg: "bg-red-50",
+  },
+  {
+    id: "crm",
+    name: "CRM",
     category: "CRM",
-    status: "Connected" as const,
-    lastSync: "Today 2:14 PM",
-    env: "Production",
+    description: "Bi-directional sync of accounts, contacts, and opportunities.",
+    badge: "Recommended",
     icon: "logos:salesforce",
-    description: "Sync contacts, accounts, and opportunities"
+    brandBg: "bg-blue-50",
   },
   {
-    id: "hubspot",
-    name: "HubSpot",
-    category: "CRM",
-    status: "Connected" as const,
-    lastSync: "Today 9:02 AM",
-    env: "Production",
-    icon: "logos:hubspot",
-    description: "Marketing automation and CRM sync"
-  },
-  {
-    id: "instantly",
-    name: "Instantly",
-    category: "Email",
-    status: "Needs attention" as const,
-    lastSync: "Yesterday 6:41 PM",
-    env: "Production",
-    icon: "solar:letter-bold",
-    description: "Cold email outreach automation"
-  },
-  {
-    id: "outreach",
-    name: "Outreach",
-    category: "Email",
-    status: "Connected" as const,
-    lastSync: "Today 11:30 AM",
-    env: "Production",
-    icon: "solar:mailbox-bold",
-    description: "Sales engagement platform"
+    id: "gcal",
+    name: "Google Calendar",
+    category: "Calendar",
+    description: "Pull meeting context into playbooks and track engagement cadence.",
+    icon: "logos:google-calendar",
+    brandBg: "bg-blue-50",
   },
   {
     id: "slack",
     name: "Slack",
-    category: "Communication",
-    status: "Connected" as const,
-    lastSync: "Today 3:45 PM",
-    env: "Production",
+    category: "Messaging",
+    description: "Receive signal alerts and share playbooks directly in Slack channels.",
     icon: "logos:slack-icon",
-    description: "Real-time notifications and alerts"
+    brandBg: "bg-purple-50",
+  },
+  {
+    id: "whatsapp",
+    name: "WhatsApp",
+    category: "Messaging",
+    description: "Send follow-up messages and receive reply signals from WhatsApp Business.",
+    icon: "logos:whatsapp-icon",
+    brandBg: "bg-green-50",
+  },
+];
+
+const COMING_SOON: ComingSoonIntegration[] = [
+  { id: "outreach", name: "Outreach", icon: "solar:mailbox-bold", brandBg: "bg-violet-50" },
+  { id: "hubspot-seq", name: "HubSpot Sequences", icon: "logos:hubspot", brandBg: "bg-orange-50" },
+  { id: "li-nav", name: "LinkedIn Sales Navigator", icon: "logos:linkedin-icon", brandBg: "bg-blue-50" },
+];
+
+const CATEGORIES: Category[] = ["All", "CRM", "Email", "Calendar", "Messaging"];
+
+// ─── StatusBadge ──────────────────────────────────────────────────────────────
+
+function StatusBadge({ connected, badge }: { connected: boolean; badge?: "Recommended" }) {
+  if (connected) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 whitespace-nowrap">
+        <Icon icon="solar:check-circle-bold" className="h-3 w-3" />
+        Connected
+      </span>
+    );
   }
-];
+  if (badge === "Recommended") {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+        Recommended
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+      Not connected
+    </span>
+  );
+}
 
-const availableIntegrations = [
-  { id: "zapier", name: "Zapier", category: "Automation", icon: "logos:zapier-icon", description: "Connect 5000+ apps" },
-  { id: "gong", name: "Gong", category: "Sales Intel", icon: "solar:microphone-bold", description: "Revenue intelligence platform" },
-  { id: "chorus", name: "Chorus", category: "Sales Intel", icon: "solar:music-notes-bold", description: "Conversation intelligence" },
-  { id: "zoom", name: "Zoom", category: "Meetings", icon: "logos:zoom-icon", description: "Video conferencing sync" }
-];
+// ─── IntegrationCard ──────────────────────────────────────────────────────────
 
-const statusColors = {
-  Connected: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
-  "Needs attention": "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
-  Disconnected: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
-};
+interface IntegrationCardProps {
+  integration: Integration;
+  connected: boolean;
+  disconnectConfirm: boolean;
+  crmSelection?: CrmProvider;
+  onCrmChange?: (v: CrmProvider) => void;
+  onConnect: () => void;
+  onDisconnectRequest: () => void;
+  onDisconnectConfirm: () => void;
+  onDisconnectCancel: () => void;
+}
 
-const categoryColors = {
-  CRM: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  Email: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20",
-  Communication: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
-  Automation: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
-  "Sales Intel": "bg-primary/10 text-primary border-primary/20",
-  Meetings: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-500/20"
-};
+function IntegrationCard({
+  integration,
+  connected,
+  disconnectConfirm,
+  crmSelection,
+  onCrmChange,
+  onConnect,
+  onDisconnectRequest,
+  onDisconnectConfirm,
+  onDisconnectCancel,
+}: IntegrationCardProps) {
+  const isCrm = integration.id === "crm";
+  const cardIcon =
+    isCrm && crmSelection === "hubspot" ? "logos:hubspot" : integration.icon;
+  const cardBrandBg =
+    isCrm && crmSelection === "hubspot" ? "bg-orange-50" : integration.brandBg;
+
+  return (
+    <div
+      className={cn(
+        "group relative flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6",
+        "transition-all duration-200 hover:-translate-y-px hover:shadow-md",
+        connected && "border-l-4 border-l-emerald-500 bg-emerald-50/20"
+      )}
+    >
+      {/* Top row: logo + badge */}
+      <div className="flex items-start justify-between gap-2">
+        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0", cardBrandBg)}>
+          <Icon icon={cardIcon} className="h-7 w-7" />
+        </div>
+        <StatusBadge connected={connected} badge={integration.badge} />
+      </div>
+
+      {/* Name + description */}
+      <div>
+        <p className="font-bold text-base text-foreground mb-1">{integration.name}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{integration.description}</p>
+      </div>
+
+      {/* CRM provider toggle */}
+      {isCrm && !connected && (
+        <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
+          {(["salesforce", "hubspot"] as CrmProvider[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => onCrmChange?.(p)}
+              className={cn(
+                "flex-1 py-1.5 capitalize transition-colors duration-150",
+                crmSelection === p
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              )}
+            >
+              {p === "salesforce" ? "Salesforce" : "HubSpot"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Actions */}
+      {disconnectConfirm ? (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Disconnect {integration.name}? This will stop syncing data.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={onDisconnectCancel}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+              onClick={onDisconnectConfirm}
+            >
+              Disconnect
+            </Button>
+          </div>
+        </div>
+      ) : connected ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+            <Icon icon="solar:check-circle-bold" className="h-4 w-4" />
+            Connected
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 justify-start px-0"
+            onClick={onDisconnectRequest}
+          >
+            Disconnect
+          </Button>
+        </div>
+      ) : (
+        <Button
+          size="sm"
+          className="w-full h-9 text-sm bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
+          onClick={onConnect}
+        >
+          Connect
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ─── ComingSoonCard ───────────────────────────────────────────────────────────
+
+function ComingSoonCard({
+  integration,
+  notified,
+  onNotify,
+}: {
+  integration: ComingSoonIntegration;
+  notified: boolean;
+  onNotify: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 opacity-60">
+      <div className="flex items-start justify-between gap-2">
+        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0", integration.brandBg)}>
+          <Icon icon={integration.icon} className="h-7 w-7" />
+        </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+          Coming soon
+        </span>
+      </div>
+
+      <p className="font-bold text-base text-foreground">{integration.name}</p>
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full h-9 text-sm transition-colors duration-200"
+        onClick={onNotify}
+        disabled={notified}
+      >
+        {notified ? (
+          <>
+            <Icon icon="solar:check-circle-bold" className="h-4 w-4 mr-2 text-emerald-600" />
+            You'll be notified
+          </>
+        ) : (
+          "Notify me"
+        )}
+      </Button>
+    </div>
+  );
+}
+
+// ─── Banner ───────────────────────────────────────────────────────────────────
+
+function Banner({ variant, onDismiss }: { variant: "zero" | "partial"; onDismiss: () => void }) {
+  const isZero = variant === "zero";
+  return (
+    <div
+      className={cn(
+        "flex items-start justify-between gap-4 rounded-xl px-5 py-4 border transition-all duration-200",
+        isZero ? "bg-primary/5 border-primary/20" : "bg-blue-50 border-blue-200"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <Icon
+          icon={isZero ? "solar:danger-circle-linear" : "solar:info-circle-linear"}
+          className={cn("h-5 w-5 mt-0.5 flex-shrink-0", isZero ? "text-primary" : "text-blue-600")}
+        />
+        <p className={cn("text-sm font-medium", isZero ? "text-primary" : "text-blue-700")}>
+          {isZero
+            ? "Connect at least Gmail or your CRM to unlock the full Pristine experience."
+            : "Good start. Connect your CRM to get bi-directional sync."}
+        </p>
+      </div>
+      <button
+        onClick={onDismiss}
+        className={cn(
+          "p-1 rounded-md transition-colors flex-shrink-0",
+          isZero
+            ? "text-primary/60 hover:text-primary hover:bg-primary/10"
+            : "text-blue-500 hover:text-blue-700 hover:bg-blue-100"
+        )}
+      >
+        <Icon icon="solar:close-circle-linear" className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Integrations() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("active");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [manageSheetOpen, setManageSheetOpen] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
+  const [activeCategory, setActiveCategory] = useState<Category>("All");
+  const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [crmSelection, setCrmSelection] = useState<CrmProvider>("salesforce");
+  const [disconnectConfirm, setDisconnectConfirm] = useState<string | null>(null);
+  const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set());
 
-  const handleManage = (integration: any) => {
-    setSelectedIntegration(integration);
-    setManageSheetOpen(true);
+  const isConnected = (id: string) => connectedIds.has(id);
+
+  const allRecommendedConnected = isConnected("gmail") && isConnected("crm");
+
+  const showBanner =
+    !bannerDismissed &&
+    !allRecommendedConnected &&
+    (connectedIds.size === 0 || !isConnected("crm"));
+
+  const bannerVariant: "zero" | "partial" = connectedIds.size === 0 ? "zero" : "partial";
+
+  const filteredIntegrations =
+    activeCategory === "All"
+      ? INTEGRATIONS
+      : INTEGRATIONS.filter((i) => i.category === activeCategory);
+
+  const handleConnect = (id: string) => {
+    setConnectedIds((prev) => new Set([...prev, id]));
+    const integration = INTEGRATIONS.find((i) => i.id === id);
+    const displayName =
+      id === "crm"
+        ? crmSelection === "salesforce" ? "Salesforce" : "HubSpot"
+        : integration?.name ?? id;
+    toast.success(`${displayName} connected successfully.`);
   };
 
-  const connectedCount = activeIntegrations.filter(i => i.status === "Connected").length;
-  const needsAttentionCount = activeIntegrations.filter(i => i.status === "Needs attention").length;
-
-  const filteredIntegrations = activeIntegrations.filter(int =>
-    int.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    int.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredAvailable = availableIntegrations.filter(int =>
-    int.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    int.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleDisconnectConfirm = (id: string) => {
+    setConnectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setDisconnectConfirm(null);
+    const name = INTEGRATIONS.find((i) => i.id === id)?.name ?? id;
+    toast(`${name} disconnected.`);
+  };
 
   return (
     <div className="min-h-full bg-background">
-      {/* Header Section */}
-      <div className="border-b border-border bg-card px-6 py-5">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Icon icon="solar:link-circle-bold" className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">Integrations</h1>
-                <p className="text-sm text-muted-foreground">
-                  Connect your CRM, email tools, and sales platforms
-                </p>
-              </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-10">
+
+          {/* ── Left column ─────────────────────────────────────────────── */}
+          <div className="lg:sticky lg:top-8 self-start space-y-8">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Integrations</h1>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Connect Pristine to your existing stack. The more context we have, the sharper your signals.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Icon icon="solar:refresh-linear" className="h-4 w-4 mr-2" />
-                Sync All
-              </Button>
-              <Button size="sm" onClick={() => navigate("/integrations/add")}>
-                <Icon icon="solar:add-circle-linear" className="h-4 w-4 mr-2" />
-                Add Integration
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon icon="solar:link-circle-linear" className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{activeIntegrations.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Integrations</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <Icon icon="solar:check-circle-linear" className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{connectedCount}</p>
-                  <p className="text-xs text-muted-foreground">Connected</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Icon icon="solar:danger-triangle-linear" className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{needsAttentionCount}</p>
-                  <p className="text-xs text-muted-foreground">Needs Attention</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <Icon icon="solar:widget-add-linear" className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{availableIntegrations.length}+</p>
-                  <p className="text-xs text-muted-foreground">Available</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search Bar */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Icon icon="solar:magnifer-linear" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search integrations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" size="default">
-                <Icon icon="solar:filter-linear" className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="active" className="gap-2">
-              <Icon icon="solar:check-circle-linear" className="h-4 w-4" />
-              Active ({activeIntegrations.length})
-            </TabsTrigger>
-            <TabsTrigger value="available" className="gap-2">
-              <Icon icon="solar:widget-add-linear" className="h-4 w-4" />
-              Available ({availableIntegrations.length})
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Active Integrations Tab */}
-          <TabsContent value="active" className="space-y-3 mt-0">
-            {filteredIntegrations.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                    <Icon icon="solar:link-circle-linear" className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">No integrations found</h3>
-                  <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
-                    {searchQuery ? "Try adjusting your search" : "Connect your first integration to get started"}
-                  </p>
-                  <Button onClick={() => navigate("/integrations/add")}>
-                    <Icon icon="solar:add-circle-linear" className="h-4 w-4 mr-2" />
-                    Add Integration
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredIntegrations.map((integration) => (
-                <Card
-                  key={integration.id}
-                  className="group hover:border-border/80 transition-all"
+            <div className="space-y-1">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                    activeCategory === cat
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      {/* Icon */}
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                        <Icon icon={integration.icon} className="h-6 w-6" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-semibold text-sm">{integration.name}</h3>
-                          <Badge
-                            variant="secondary"
-                            className={cn("text-[10px] uppercase font-bold tracking-wide border", statusColors[integration.status])}
-                          >
-                            {integration.status}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={cn("text-[10px] uppercase font-medium", categoryColors[integration.category as keyof typeof categoryColors])}
-                          >
-                            {integration.category}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{integration.description}</p>
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Icon icon="solar:clock-circle-linear" className="h-3.5 w-3.5" />
-                            Last sync: {integration.lastSync}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Icon icon="solar:server-linear" className="h-3.5 w-3.5" />
-                            {integration.env}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleManage(integration)}
-                        >
-                          <Icon icon="solar:settings-linear" className="h-3.5 w-3.5 mr-1.5" />
-                          Manage
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-3 text-xs"
-                        >
-                          <Icon icon="solar:refresh-linear" className="h-3.5 w-3.5 mr-1.5" />
-                          Sync
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          {/* Available Integrations Tab */}
-          <TabsContent value="available" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredAvailable.map((integration) => (
-                <Card
-                  key={integration.id}
-                  className="group hover:border-border/80 hover:shadow-sm transition-all cursor-pointer"
-                  onClick={() => navigate("/integrations/add")}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      {/* Icon */}
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                        <Icon icon={integration.icon} className="h-6 w-6" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-sm">{integration.name}</h3>
-                          <Badge
-                            variant="outline"
-                            className={cn("text-[10px] uppercase font-medium", categoryColors[integration.category as keyof typeof categoryColors])}
-                          >
-                            {integration.category}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{integration.description}</p>
-                      </div>
-
-                      {/* Connect Button */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Icon icon="solar:add-circle-linear" className="h-3.5 w-3.5 mr-1.5" />
-                        Connect
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <Icon
+                    icon={
+                      cat === "All" ? "solar:widget-5-linear" :
+                      cat === "CRM" ? "solar:database-linear" :
+                      cat === "Email" ? "solar:letter-linear" :
+                      cat === "Calendar" ? "solar:calendar-linear" :
+                      "solar:chat-round-linear"
+                    }
+                    className="h-4 w-4 flex-shrink-0"
+                  />
+                  {cat}
+                </button>
               ))}
             </div>
 
-            {/* Browse More CTA */}
-            <Card className="mt-6">
-              <CardContent className="p-6 text-center">
-                <Icon icon="solar:widget-5-bold" className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <h3 className="font-semibold mb-1">Explore More Integrations</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Connect with 50+ tools to power your sales workflow
-                </p>
-                <Button onClick={() => navigate("/integrations/add")}>
-                  <Icon icon="solar:arrow-right-up-linear" className="h-4 w-4 mr-2" />
-                  Browse Integration Catalog
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+              <Icon icon="solar:add-circle-linear" className="h-4 w-4" />
+              Request an integration
+            </button>
+          </div>
 
-      {/* Manage Sheet */}
-      <ManageIntegrationSheet
-        open={manageSheetOpen}
-        onOpenChange={setManageSheetOpen}
-        integration={selectedIntegration}
-      />
+          {/* ── Right column ────────────────────────────────────────────── */}
+          <div className="space-y-6">
+            {/* Banner */}
+            {showBanner && (
+              <Banner variant={bannerVariant} onDismiss={() => setBannerDismissed(true)} />
+            )}
+
+            {/* Cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredIntegrations.length > 0 ? (
+                filteredIntegrations.map((integration) => (
+                  <IntegrationCard
+                    key={integration.id}
+                    integration={integration}
+                    connected={isConnected(integration.id)}
+                    disconnectConfirm={disconnectConfirm === integration.id}
+                    crmSelection={integration.id === "crm" ? crmSelection : undefined}
+                    onCrmChange={integration.id === "crm" ? setCrmSelection : undefined}
+                    onConnect={() => handleConnect(integration.id)}
+                    onDisconnectRequest={() => setDisconnectConfirm(integration.id)}
+                    onDisconnectConfirm={() => handleDisconnectConfirm(integration.id)}
+                    onDisconnectCancel={() => setDisconnectConfirm(null)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-2 flex flex-col items-center justify-center py-16 text-center">
+                  <Icon icon="solar:widget-5-linear" className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">No integrations in this category yet.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Coming soon section — only on "All" */}
+            {activeCategory === "All" && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon icon="solar:clock-circle-linear" className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Coming soon</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {COMING_SOON.map((cs) => (
+                    <ComingSoonCard
+                      key={cs.id}
+                      integration={cs}
+                      notified={notifiedIds.has(cs.id)}
+                      onNotify={() => setNotifiedIds((prev) => new Set([...prev, cs.id]))}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
