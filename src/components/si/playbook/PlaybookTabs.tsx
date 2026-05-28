@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { PlaybookData } from "@/lib/si/types";
 import { NextActionChecklist } from "./NextActionChecklist";
 import { TimelineItem } from "./TimelineItem";
@@ -8,9 +8,10 @@ interface PlaybookTabsProps {
   accountName?: string;
   onToggleAction: (id: string) => void;
   hasMeetingNotes?: boolean;
+  activeTabOverride?: Tab;
 }
 
-const TABS = ["Summary", "Discovery", "Talking Points", "Next Actions", "Timeline", "Deep Dive"] as const;
+const TABS = ["Summary", "Discovery", "Talking Points", "Next Actions", "Timeline", "Market Intelligence", "Deep Dive"] as const;
 type Tab = (typeof TABS)[number];
 
 const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string }> = {
@@ -19,8 +20,12 @@ const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string
   Low: { bg: "#F3F4F6", text: "#6B7280" },
 };
 
-export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false }: PlaybookTabsProps) {
+export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false, activeTabOverride }: PlaybookTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Summary");
+
+  useEffect(() => {
+    if (activeTabOverride) setActiveTab(activeTabOverride);
+  }, [activeTabOverride]);
 
   return (
     <div>
@@ -168,34 +173,8 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
         </div>
       )}
 
-      {activeTab === "Deep Dive" && (
+      {activeTab === "Market Intelligence" && (
         <div className="flex flex-col gap-8">
-          {/* Company Overview */}
-          <div>
-            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
-              Company Overview
-            </h3>
-            <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-3">
-              <p className="text-sm text-[--si-text-primary] leading-relaxed">
-                This account operates a B2B SaaS platform focused on revenue operations and pipeline intelligence. Founded in 2017, they serve mid-market and enterprise sales teams across North America and EMEA, with a particular concentration in the technology and financial services verticals.
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {[
-                  { label: "Founded", value: "2017" },
-                  { label: "Employees", value: "450–600" },
-                  { label: "Stage", value: "Series C" },
-                  { label: "HQ", value: "San Francisco, CA" },
-                  { label: "Primary Verticals", value: "Tech, FinServ, Healthcare" },
-                ].map(({ label, value }) => (
-                  <li key={label} className="flex items-center gap-2 text-sm">
-                    <span className="text-[--si-text-secondary] min-w-[140px]">{label}</span>
-                    <span className="text-[--si-text-primary] font-medium">{value}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
           {/* Competitor Activity */}
           <div>
             <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
@@ -230,10 +209,10 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
             </div>
           </div>
 
-          {/* Market Intelligence */}
+          {/* Market Trends */}
           <div>
             <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
-              Market Intelligence
+              Market Trends
             </h3>
             <div className="flex flex-col gap-3">
               {[
@@ -255,6 +234,36 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
                   <p className="text-sm text-[--si-text-secondary] leading-snug">{detail}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "Deep Dive" && (
+        <div className="flex flex-col gap-8">
+          {/* Company Overview */}
+          <div>
+            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-3">
+              Company Overview
+            </h3>
+            <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-3">
+              <p className="text-sm text-[--si-text-primary] leading-relaxed">
+                This account operates a B2B SaaS platform focused on revenue operations and pipeline intelligence. Founded in 2017, they serve mid-market and enterprise sales teams across North America and EMEA, with a particular concentration in the technology and financial services verticals.
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {[
+                  { label: "Founded", value: "2017" },
+                  { label: "Employees", value: "450–600" },
+                  { label: "Stage", value: "Series C" },
+                  { label: "HQ", value: "San Francisco, CA" },
+                  { label: "Primary Verticals", value: "Tech, FinServ, Healthcare" },
+                ].map(({ label, value }) => (
+                  <li key={label} className="flex items-center gap-2 text-sm">
+                    <span className="text-[--si-text-secondary] min-w-[140px]">{label}</span>
+                    <span className="text-[--si-text-primary] font-medium">{value}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>

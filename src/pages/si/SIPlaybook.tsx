@@ -29,6 +29,8 @@ export default function SIPlaybook() {
   // Simulated "generate" loading
   const [isGenerating, setIsGenerating] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [hasMeetingNotes, setHasMeetingNotes] = useState(false);
+  const [activeTabOverride, setActiveTabOverride] = useState<"Next Actions" | undefined>(undefined);
 
   function handleGenerate() {
     setIsGenerating(true);
@@ -106,7 +108,14 @@ export default function SIPlaybook() {
           </div>
         </div>
 
-        <ScheduleMeetingModal open={showScheduleModal} onClose={() => setShowScheduleModal(false)} />
+        <ScheduleMeetingModal
+          open={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          onScheduled={() => {
+            setHasMeetingNotes(true);
+            setActiveTabOverride("Next Actions");
+          }}
+        />
 
         {/* Generated at label */}
         <p className="text-xs text-[--si-text-muted] mb-6">
@@ -119,7 +128,7 @@ export default function SIPlaybook() {
         </p>
 
         {/* Tabs */}
-        <PlaybookTabs playbook={playbook} accountName={account?.accountName} onToggleAction={handleToggleAction} hasMeetingNotes={false} />
+        <PlaybookTabs playbook={playbook} accountName={account?.accountName} onToggleAction={handleToggleAction} hasMeetingNotes={hasMeetingNotes} activeTabOverride={activeTabOverride} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import type { ICPAccount } from "@/lib/si/types";
 
@@ -21,6 +22,7 @@ function ScorePill({ score }: { score: number }) {
 }
 
 export default function AccountResultsTable({ accounts, onAddToWatchlist }: AccountResultsTableProps) {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -125,8 +127,14 @@ export default function AccountResultsTable({ accounts, onAddToWatchlist }: Acco
                   }`}
                 >
                   <td className="px-4 py-3">
-                    <div className="font-medium text-[--si-text-primary]">{account.companyName}</div>
-                    <div className="text-xs text-[--si-text-muted]">{account.domain}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/si/playbook/${account.id}`)}
+                      className="text-left group"
+                    >
+                      <div className="font-medium text-[--si-text-primary] group-hover:text-[--si-primary] transition-colors">{account.companyName}</div>
+                      <div className="text-xs text-[--si-text-muted]">{account.domain}</div>
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-[--si-text-secondary]">{account.industry}</td>
                   <td className="px-4 py-3 text-[--si-text-secondary] whitespace-nowrap">{account.revenue}</td>

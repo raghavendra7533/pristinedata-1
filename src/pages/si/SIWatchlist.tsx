@@ -8,6 +8,24 @@ import { AccountWatchCard } from "@/components/si/watchlist/AccountWatchCard";
 import { CreateWatchlistModal } from "@/components/si/watchlist/CreateWatchlistModal";
 import type { WatchlistAccount, SignalType } from "@/lib/si/types";
 
+interface WatchedContact {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  domain: string;
+  addedAt: string;
+  latestSignal?: string;
+  signalDate?: string;
+}
+
+const MOCK_WATCHED_CONTACTS: WatchedContact[] = [
+  { id: "c-1", name: "Sarah Chen", title: "VP of Sales", company: "Lattice", domain: "lattice.com", addedAt: "2026-05-10T00:00:00Z", latestSignal: "Promoted to VP of Sales", signalDate: "2026-05-15T00:00:00Z" },
+  { id: "c-2", name: "Marcus Webb", title: "Head of Revenue Ops", company: "Rippling", domain: "rippling.com", addedAt: "2026-05-08T00:00:00Z", latestSignal: "Changed jobs from Salesforce", signalDate: "2026-05-12T00:00:00Z" },
+  { id: "c-3", name: "Priya Kapoor", title: "CRO", company: "Gong", domain: "gong.io", addedAt: "2026-05-01T00:00:00Z", latestSignal: "Published post on AI in sales", signalDate: "2026-05-17T00:00:00Z" },
+  { id: "c-4", name: "James O'Brien", title: "Director of Demand Gen", company: "HubSpot", domain: "hubspot.com", addedAt: "2026-04-28T00:00:00Z" },
+];
+
 const TIME_RANGE_DAYS: Record<"24h" | "7d" | "30d", number> = {
   "24h": 1,
   "7d": 7,
@@ -27,6 +45,7 @@ export default function SIWatchlist() {
   const navigate = useNavigate();
   const { watchedAccounts, addWatchedAccount, profile } = useUserProfileStore();
 
+  const [activeTab, setActiveTab] = useState<"accounts" | "contacts">("accounts");
   const [signalFilter, setSignalFilter] = useState<string>("all");
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,25 +137,87 @@ export default function SIWatchlist() {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <button
-            onClick={() => navigate("/si/icp-discovery")}
-            className="flex items-center gap-1.5 rounded-full border border-[--si-card-border] px-3 py-1.5 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors"
-          >
-            <Icon icon="solar:filter-linear" className="w-4 h-4" />
-            Build from ICP
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 rounded-full bg-[--si-primary] text-white px-3 py-1.5 text-sm font-medium hover:bg-[--si-primary-hover] transition-colors"
-          >
-            <Icon icon="solar:add-circle-linear" className="w-4 h-4" />
-            Add Accounts
-          </button>
+          {activeTab === "accounts" && (
+            <>
+              <button
+                onClick={() => navigate("/si/icp-discovery")}
+                className="flex items-center gap-1.5 rounded-full border border-[--si-card-border] px-3 py-1.5 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors"
+              >
+                <Icon icon="solar:filter-linear" className="w-4 h-4" />
+                Build from ICP
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5 rounded-full bg-[--si-primary] text-white px-3 py-1.5 text-sm font-medium hover:bg-[--si-primary-hover] transition-colors"
+              >
+                <Icon icon="solar:add-circle-linear" className="w-4 h-4" />
+                Add Accounts
+              </button>
+            </>
+          )}
+          {activeTab === "contacts" && (
+            <button
+              className="flex items-center gap-1.5 rounded-full bg-[--si-primary] text-white px-3 py-1.5 text-sm font-medium hover:bg-[--si-primary-hover] transition-colors"
+            >
+              <Icon icon="solar:add-circle-linear" className="w-4 h-4" />
+              Add Contact
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Role-aware getting-started banner — only when no user-added accounts */}
-      {watchedAccounts.length === 0 && (() => {
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-[--si-card-border]">
+        {(["accounts", "contacts"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              activeTab === tab
+                ? "border-[--si-primary] text-[--si-primary]"
+                : "border-transparent text-[--si-text-secondary] hover:text-gray-700"
+            }`}
+          >
+            {tab === "accounts" ? `Accounts (${allAccounts.length - removedIds.size})` : `Contacts (${MOCK_WATCHED_CONTACTS.length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Contacts tab */}
+      {activeTab === "contacts" && (
+        <div className="flex flex-col gap-3">
+          {MOCK_WATCHED_CONTACTS.map((contact) => (
+            <div
+              key={contact.id}
+              className="rounded-xl border border-[--si-card-border] bg-[--si-card-bg] p-4 flex items-center gap-4 hover:border-[--si-primary]/30 transition-colors"
+            >
+              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm flex-shrink-0">
+                {contact.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{contact.name}</p>
+                <p className="text-xs text-gray-400">{contact.title} · {contact.company}</p>
+              </div>
+              {contact.latestSignal && (
+                <div className="text-right flex-shrink-0 max-w-[220px]">
+                  <p className="text-xs font-medium text-gray-700 truncate">{contact.latestSignal}</p>
+                  <p className="text-[11px] text-gray-400">
+                    {contact.signalDate
+                      ? `${Math.floor((Date.now() - new Date(contact.signalDate).getTime()) / 86400000)}d ago`
+                      : ""}
+                  </p>
+                </div>
+              )}
+              <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
+                <Icon icon="solar:trash-bin-minimalistic-linear" className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Accounts tab */}
+      {activeTab === "accounts" && watchedAccounts.length === 0 && (() => {
         const role = profile?.role ?? "";
         const isSDR = /sdr|bdr|business development|outbound/i.test(role);
         const isAE = !isSDR;
@@ -189,49 +270,53 @@ export default function SIWatchlist() {
         );
       })()}
 
-      {/* Filter bar */}
-      <WatchlistFilterBar
-        activeSignalFilter={signalFilter}
-        onSignalFilterChange={setSignalFilter}
-        activeTimeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      {activeTab === "accounts" && (
+        <>
+          {/* Filter bar */}
+          <WatchlistFilterBar
+            activeSignalFilter={signalFilter}
+            onSignalFilterChange={setSignalFilter}
+            activeTimeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
 
-      {/* Account cards or empty state */}
-      {filteredAccounts.length === 0 ? (
-        <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-12 flex flex-col items-center gap-3 text-center">
-          <Icon icon="solar:eye-linear" className="w-10 h-10 text-[--si-text-muted]" />
-          <p className="text-sm text-[--si-text-secondary] max-w-xs">
-            Your watchlist is empty. Add accounts to start monitoring signals.
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <button
-              onClick={() => navigate("/si/icp-discovery")}
-              className="rounded-full border border-[--si-card-border] px-4 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors"
-            >
-              Build from ICP
-            </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="rounded-full bg-[--si-primary] text-white px-4 py-2 text-sm font-medium hover:bg-[--si-primary-hover] transition-colors"
-            >
-              Add Accounts
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {filteredAccounts.map((account) => (
-            <AccountWatchCard
-              key={account.id}
-              account={account}
-              onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
-              onRemove={() => handleRemove(account.id)}
-            />
-          ))}
-        </div>
+          {/* Account cards or empty state */}
+          {filteredAccounts.length === 0 ? (
+            <div className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-12 flex flex-col items-center gap-3 text-center">
+              <Icon icon="solar:eye-linear" className="w-10 h-10 text-[--si-text-muted]" />
+              <p className="text-sm text-[--si-text-secondary] max-w-xs">
+                Your watchlist is empty. Add accounts to start monitoring signals.
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={() => navigate("/si/icp-discovery")}
+                  className="rounded-full border border-[--si-card-border] px-4 py-2 text-sm font-medium text-[--si-text-secondary] hover:bg-gray-50 transition-colors"
+                >
+                  Build from ICP
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="rounded-full bg-[--si-primary] text-white px-4 py-2 text-sm font-medium hover:bg-[--si-primary-hover] transition-colors"
+                >
+                  Add Accounts
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filteredAccounts.map((account) => (
+                <AccountWatchCard
+                  key={account.id}
+                  account={account}
+                  onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
+                  onRemove={() => handleRemove(account.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create watchlist modal */}

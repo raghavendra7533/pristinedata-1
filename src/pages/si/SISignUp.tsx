@@ -56,7 +56,7 @@ export default function SISignUp() {
       role: roleTitle.trim(),
       onboardingCompleted: false,
     });
-    navigate("/si/onboarding");
+    navigate("/onboarding/integrations");
   }
 
   return (

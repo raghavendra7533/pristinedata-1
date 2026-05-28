@@ -89,7 +89,6 @@ export default function Search() {
       setIsAnalyzing(true);
       const lowerQuery = queryText.toLowerCase();
 
-      // Check if query contains a LinkedIn URL
       const linkedinUrlPattern = /linkedin\.com\/in\/[\w-]+/i;
       if (linkedinUrlPattern.test(queryText)) {
         setTimeout(() => {
@@ -101,7 +100,6 @@ export default function Search() {
       }
 
       const contactKeywords = ['cmo', 'ceo', 'cto', 'cfo', 'vp', 'director', 'manager', 'head of', 'leader', 'executive', 'founder', 'president', 'chief', 'contact', 'people', 'persona', 'buyer', 'decision maker'];
-
       const hasContact = contactKeywords.some(keyword => lowerQuery.includes(keyword));
 
       setTimeout(() => {
@@ -214,7 +212,6 @@ export default function Search() {
         {/* Filters Panel */}
         {filtersOpen && (
           <div className="mt-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in">
-            {/* Filter header */}
             <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-muted/20">
               <div className="flex items-center gap-2">
                 <Icon icon="solar:tuning-2-linear" className="h-4 w-4 text-primary" />
@@ -238,7 +235,6 @@ export default function Search() {
             </div>
 
             <div className="p-5 grid grid-cols-2 gap-x-6 gap-y-5">
-              {/* Job Title (people mode) */}
               {searchMode === "people" && (
                 <FilterSection
                   title="Job Title"
@@ -248,8 +244,6 @@ export default function Search() {
                   onToggle={(v) => toggleFilter(selectedJobTitles, setSelectedJobTitles, v)}
                 />
               )}
-
-              {/* Industry */}
               <FilterSection
                 title="Industry"
                 icon="solar:buildings-2-linear"
@@ -257,8 +251,6 @@ export default function Search() {
                 selected={selectedIndustries}
                 onToggle={(v) => toggleFilter(selectedIndustries, setSelectedIndustries, v)}
               />
-
-              {/* Location */}
               <FilterSection
                 title="Location"
                 icon="solar:map-point-linear"
@@ -266,8 +258,6 @@ export default function Search() {
                 selected={selectedLocations}
                 onToggle={(v) => toggleFilter(selectedLocations, setSelectedLocations, v)}
               />
-
-              {/* Company Size */}
               <FilterSection
                 title="Company Size"
                 icon="solar:users-group-rounded-linear"
@@ -275,8 +265,6 @@ export default function Search() {
                 selected={selectedCompanySizes}
                 onToggle={(v) => toggleFilter(selectedCompanySizes, setSelectedCompanySizes, v)}
               />
-
-              {/* Technologies */}
               <FilterSection
                 title="Technologies"
                 icon="solar:code-square-linear"
@@ -284,8 +272,6 @@ export default function Search() {
                 selected={selectedTechnologies}
                 onToggle={(v) => toggleFilter(selectedTechnologies, setSelectedTechnologies, v)}
               />
-
-              {/* Funding Stage */}
               <FilterSection
                 title="Funding Stage"
                 icon="solar:money-bag-linear"
@@ -293,8 +279,6 @@ export default function Search() {
                 selected={selectedFunding}
                 onToggle={(v) => toggleFilter(selectedFunding, setSelectedFunding, v)}
               />
-
-              {/* Revenue */}
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Icon icon="solar:chart-2-linear" className="h-3.5 w-3.5 text-muted-foreground" />
@@ -316,7 +300,6 @@ export default function Search() {
               </div>
             </div>
 
-            {/* Apply button */}
             <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 {totalFilters > 0 ? `${totalFilters} filter${totalFilters > 1 ? "s" : ""} selected` : "No filters selected"}
@@ -362,7 +345,6 @@ export default function Search() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Examples Tab */}
               <TabsContent value="examples" className="p-5 mt-0">
                 <div className="space-y-2">
                   {examples.map((example, idx) => (
@@ -385,7 +367,6 @@ export default function Search() {
                 </div>
               </TabsContent>
 
-              {/* Recent Searches Tab */}
               <TabsContent value="recent" className="p-5 mt-0">
                 <div className="space-y-2">
                   {recentSearches.map((search, idx) => (
@@ -411,7 +392,6 @@ export default function Search() {
                 </div>
               </TabsContent>
 
-              {/* Saved Tab */}
               <TabsContent value="saved" className="p-5 mt-0">
                 <div className="space-y-2">
                   {savedSearches.map((search, idx) => (
@@ -438,7 +418,6 @@ export default function Search() {
               </TabsContent>
             </Tabs>
 
-            {/* Footer */}
             <div className="px-5 py-3 bg-muted/50 border-t border-border flex items-center justify-between">
               <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Icon icon="solar:question-circle-linear" className="h-4 w-4" />
