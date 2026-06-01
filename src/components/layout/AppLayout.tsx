@@ -247,6 +247,17 @@ export function AppLayout() {
           ))}
         </nav>
 
+        {/* Try Sales Intelligence */}
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => navigate("/si/start")}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
+          >
+            <Icon icon="solar:lightning-linear" className="h-3.5 w-3.5 flex-shrink-0" />
+            Try Sales Intelligence
+          </button>
+        </div>
+
         {/* Bottom — User */}
         <div className="border-t border-border p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">

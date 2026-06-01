@@ -18,6 +18,7 @@ import SIMcp from "./pages/si/SIMcp";
 import SIMarketIntelligence from "./pages/si/SIMarketIntelligence";
 import SIIntegrations from "./pages/si/SIIntegrations";
 import SIOnboarding from "./pages/si/SIOnboarding";
+import SIOnboardingWizard from "./pages/si/SIOnboardingWizard";
 import SILanding from "./pages/si/SILanding";
 import SISignUp from "./pages/si/SISignUp";
 import SISignIn from "./pages/si/SISignIn";
@@ -113,8 +114,12 @@ const App = () => (
           <Route path="/onboarding/integrations" element={<OnboardingIntegrations />} />
           {/* SI Product Routes */}
           <Route path="/si/onboarding" element={<SIOnboarding />} />
+          <Route path="/si/onboard" element={<SIOnboardingWizard />} />
+          <Route path="/si/start" element={<SIOnboardingWizard />} />
           <Route path="/landing" element={<SILanding />} />
-          <Route path="/sign-up" element={<SISignUp />} />
+          {/* Replaced by SIOnboardingWizard — kept for reference */}
+          {/* <Route path="/sign-up" element={<SISignUp />} /> */}
+          <Route path="/signup" element={<SIOnboardingWizard />} />
           <Route path="/sign-in" element={<SISignIn />} />
           <Route element={<SILayout />}>
             <Route path="/si" element={<Navigate to="/si/dashboard" replace />} />
