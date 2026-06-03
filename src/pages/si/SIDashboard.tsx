@@ -205,7 +205,15 @@ function AccountInitialBadge({ name, domain, size = 32 }: { name: string; domain
 
 export default function SIDashboard() {
   const navigate = useNavigate();
-  const { watchedAccounts } = useUserProfileStore();
+  const { watchedAccounts, profile } = useUserProfileStore();
+  const [icpBannerDismissed, setIcpBannerDismissed] = useState(
+    () => localStorage.getItem("si-icp-banner-dismissed") === "true"
+  );
+
+  const handleDismissIcpBanner = () => {
+    localStorage.setItem("si-icp-banner-dismissed", "true");
+    setIcpBannerDismissed(true);
+  };
   const [signalFilter, setSignalFilter] = useState<"all" | SignalType>("all");
   const shuffledBriefAccounts = useMemo(
     () => [...MORNING_BRIEF_ACCOUNTS].sort(() => Math.random() - 0.5),
@@ -329,6 +337,40 @@ export default function SIDashboard() {
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
       <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* ICP callout banner */}
+          {!icpBannerDismissed && profile?.icp && (
+            <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#E0E7FF] bg-[#EEF2FF] px-5 py-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex-shrink-0">
+                  <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4 text-[#6366F1]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#3730A3]">
+                    We built your starting ICP from your website.
+                  </p>
+                  <p className="text-sm text-[#4338CA] mt-0.5">
+                    Your signal feed is already filtered for accounts that fit. Refine your ICP anytime.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <a
+                  href="/si/icp"
+                  className="text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5] transition-colors whitespace-nowrap"
+                >
+                  Refine ICP →
+                </a>
+                <button
+                  onClick={handleDismissIcpBanner}
+                  className="text-[#6366F1] hover:text-[#4F46E5] transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <Icon icon="solar:close-circle-linear" className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* HERO BANNER */}
           <div

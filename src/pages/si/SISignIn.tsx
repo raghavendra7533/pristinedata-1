@@ -91,7 +91,7 @@ export default function SISignIn() {
 
           <p className="text-sm text-[#6B7280] text-center mt-5">
             Don't have an account?{" "}
-            <NavLink to="/sign-up" className="text-[#6366F1] font-medium hover:underline">
+            <NavLink to="/signup" className="text-[#6366F1] font-medium hover:underline">
               Get started free
             </NavLink>
           </p>

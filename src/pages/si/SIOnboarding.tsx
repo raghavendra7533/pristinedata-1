@@ -1,947 +1,1162 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
+import type { ICPConfig } from "@/lib/si/types";
+import logoLight from "@/assets/Pristine Data AI Logo.svg";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Role category helper ────────────────────────────────────────────────────
 
-type WizardStep = 3 | 4 | 5 | 6 | "loading" | "confirmation" | "finalLoading";
-
-type RoleOption =
-  | "Account Executive"
-  | "SDR / BDR"
-  | "Sales Leader"
-  | "Founder / CEO"
-  | "RevOps / Sales Ops"
-  | "Other";
-
-type PlanId = "free" | "basic" | "pro";
-
-interface ICPState {
-  industry: string;
-  companySize: string;
-  geography: string[];
-  jobTitles: string[];
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getRoleCategory(role: string): "sdr" | "ae" {
+function getRoleCategory(role: string): "sdr" | "ae" | "founder" {
   const lower = role.toLowerCase();
-  if (
-    lower.includes("sdr") ||
-    lower.includes("bdr") ||
-    lower.includes("business development") ||
-    lower.includes("development rep") ||
-    lower.includes("outbound")
-  ) {
+  if (lower.includes("sdr") || lower.includes("bdr") || lower.includes("high-volume") || lower.includes("outbound")) {
     return "sdr";
+  }
+  if (lower.includes("founder") || lower.includes("0 to 1") || lower.includes("0-to-1")) {
+    return "founder";
   }
   return "ae";
 }
 
-function getDefaultTitlesForRole(role: RoleOption): string[] {
-  switch (role) {
-    case "Account Executive":
-    case "Sales Leader":
-      return ["VP of Sales", "Head of Revenue", "CRO", "Sales Director"];
-    case "SDR / BDR":
-      return ["VP of Sales", "Sales Manager", "Head of Growth"];
-    case "Founder / CEO":
-      return ["CEO", "Co-Founder", "VP of Engineering", "CTO"];
-    case "RevOps / Sales Ops":
-      return ["VP of Sales", "Head of RevOps", "Sales Operations Manager"];
-    default:
-      return ["VP of Sales", "Head of Sales"];
+// ─── ICP silent detection ────────────────────────────────────────────────────
+
+function deriveICPFromCompany(industry: string, role: string): ICPConfig {
+  const roleCategory = getRoleCategory(role);
+
+  const industryMap: Record<string, Partial<ICPConfig>> = {
+    "SaaS": {
+      industries: ["SaaS", "Software"],
+      employeeMin: 50,
+      employeeMax: 1000,
+      revenueMin: 5,
+      revenueMax: 100,
+      geographies: ["North America"],
+      jobTitles: ["VP of Sales", "Head of Revenue", "CRO"],
+      seniorityLevels: ["VP", "C-Suite", "Director"],
+    },
+    "Fintech": {
+      industries: ["Fintech", "Financial Services"],
+      employeeMin: 100,
+      employeeMax: 2000,
+      revenueMin: 10,
+      revenueMax: 200,
+      geographies: ["North America", "EMEA"],
+      jobTitles: ["CFO", "Head of Finance", "VP Operations"],
+      seniorityLevels: ["VP", "C-Suite"],
+    },
+    "Agency": {
+      industries: ["Marketing", "Agency", "Professional Services"],
+      employeeMin: 10,
+      employeeMax: 500,
+      revenueMin: 1,
+      revenueMax: 50,
+      geographies: ["North America"],
+      jobTitles: ["CMO", "Head of Marketing", "Marketing Director"],
+      seniorityLevels: ["VP", "Director", "C-Suite"],
+    },
+    "HealthTech": {
+      industries: ["HealthTech", "Healthcare"],
+      employeeMin: 50,
+      employeeMax: 1000,
+      revenueMin: 5,
+      revenueMax: 100,
+      geographies: ["North America"],
+      jobTitles: ["CTO", "VP of Product", "Head of Clinical Operations"],
+      seniorityLevels: ["VP", "C-Suite", "Director"],
+    },
+  };
+
+  const base = industryMap[industry] ?? {
+    industries: [industry].filter(Boolean),
+    employeeMin: 50,
+    employeeMax: 1000,
+    revenueMin: 5,
+    revenueMax: 100,
+    geographies: ["North America"],
+    jobTitles: ["VP of Sales", "Head of Revenue"],
+    seniorityLevels: ["VP", "Director"],
+  };
+
+  if (roleCategory === "sdr") {
+    return {
+      ...base,
+      employeeMin: 20,
+      employeeMax: 500,
+      seniorityLevels: ["Manager", "Director", "VP"],
+    } as ICPConfig;
   }
+
+  return base as ICPConfig;
 }
 
-// ─── Step 3 — Role Selection ───────────────────────────────────────────────
+// ─── Mock Enrichment ──────────────────────────────────────────────────────────
 
-const ROLE_OPTIONS: { label: RoleOption; icon: string }[] = [
-  { label: "Account Executive", icon: "solar:user-bold" },
-  { label: "SDR / BDR", icon: "solar:phone-calling-bold" },
-  { label: "Sales Leader", icon: "solar:chart-2-bold" },
-  { label: "Founder / CEO", icon: "solar:star-bold" },
-  { label: "RevOps / Sales Ops", icon: "solar:settings-bold" },
-  { label: "Other", icon: "solar:users-group-two-rounded-bold" },
+interface EnrichedCompany {
+  companyName: string;
+  industry: string;
+  teamSize: string;
+  location: string;
+}
+
+function mockEnrichDomain(domain: string): EnrichedCompany {
+  const root = domain.split(".")[0] ?? domain;
+  const companyName = root.charAt(0).toUpperCase() + root.slice(1);
+  return {
+    companyName,
+    industry: "SaaS",
+    teamSize: "51-200",
+    location: "San Francisco, CA",
+  };
+}
+
+// ─── Step Dots ────────────────────────────────────────────────────────────────
+
+function OnboardingDots({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`rounded-full transition-all ${
+            i + 1 === step
+              ? "w-8 h-1.5 bg-[#6366F1]"
+              : "w-4 h-1.5 bg-[#E5E7EB]"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Split Layout ─────────────────────────────────────────────────────────────
+// Left = white content panel. Right = dark indigo brand panel.
+
+const DOT_GRID: React.CSSProperties = {
+  backgroundImage: "radial-gradient(circle, rgba(165,180,252,0.13) 1px, transparent 1px)",
+  backgroundSize: "28px 28px",
+};
+
+interface SplitLayoutProps {
+  children: React.ReactNode;          // left — form / content
+  panel: React.ReactNode;             // right — brand hero
+  panelTagline?: string;
+  mobileTop?: React.ReactNode;        // shown above content on < md
+}
+
+function SplitLayout({ children, panel, panelTagline = "Your pipeline, before you ask.", mobileTop }: SplitLayoutProps) {
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+
+      {/* Mobile brand strip */}
+      {mobileTop && (
+        <div className="flex md:hidden" style={{ background: "#1E1B4B" }}>
+          {mobileTop}
+        </div>
+      )}
+
+      {/* Left — content */}
+      <div className="flex-1 bg-white flex items-center justify-center px-6 py-10 md:py-0 order-first md:order-first">
+        <div className="w-full max-w-md">
+          {children}
+        </div>
+      </div>
+
+      {/* Right — brand panel */}
+      <div
+        className="hidden md:flex md:w-[46%] flex-col justify-between px-12 py-10 relative overflow-hidden"
+        style={{ background: "#1E1B4B" }}
+      >
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={DOT_GRID} />
+
+        {/* Hero content + logo stacked together, centered */}
+        <div className="relative z-10 flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-8 w-full">
+            <img src={logoLight} alt="Pristine" className="h-8 w-auto" />
+            {panel}
+          </div>
+        </div>
+
+        {/* Tagline */}
+        <p className="relative z-10 text-xs text-indigo-400 text-center">
+          {panelTagline}
+        </p>
+      </div>
+
+    </div>
+  );
+}
+
+// ─── Step 1 — Email Capture ───────────────────────────────────────────────────
+
+interface Step1Data {
+  email: string;
+  name: string;
+  password: string;
+  linkedin: string;
+}
+
+interface Step1Props {
+  onSubmit: (data: Step1Data) => void;
+}
+
+const PERSONAL_DOMAINS = new Set([
+  "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com",
+  "aol.com", "protonmail.com", "me.com", "live.com", "msn.com",
+  "ymail.com", "googlemail.com", "mac.com",
+]);
+
+function isPersonalEmail(e: string): boolean {
+  const domain = e.split("@")[1]?.toLowerCase() ?? "";
+  return PERSONAL_DOMAINS.has(domain);
+}
+
+// ─── Panel Animation Components ───────────────────────────────────────────────
+
+// Step 1 — Floating live signal cards
+
+const LIVE_SIGNALS = [
+  { domain: "salesforce.com", initials: "SF", color: "#0EA5E9", bg: "#EFF6FF", name: "Salesforce",  signal: "Hiring 12 SDRs",       icon: "solar:users-group-rounded-bold" },
+  { domain: "hubspot.com",    initials: "HS", color: "#F97316", bg: "#FFF7ED", name: "HubSpot",     signal: "Series B · $120M",      icon: "solar:dollar-minimalistic-bold" },
+  { domain: "linear.app",     initials: "LN", color: "#6366F1", bg: "#EEF2FF", name: "Linear",      signal: "New VP Sales hired",    icon: "solar:user-plus-rounded-bold" },
+  { domain: "vercel.com",     initials: "VR", color: "#10B981", bg: "#ECFDF5", name: "Vercel",      signal: "Tech stack change",     icon: "solar:code-square-bold" },
+  { domain: "figma.com",      initials: "FG", color: "#F43F5E", bg: "#FFF1F2", name: "Figma",       signal: "Headcount growing 40%", icon: "solar:graph-up-bold" },
+  { domain: "notion.so",      initials: "NT", color: "#8B5CF6", bg: "#F5F3FF", name: "Notion",      signal: "Job posting surge",     icon: "solar:bolt-bold" },
 ];
 
-function StepRoleSelection({
-  selected,
-  onSelect,
-  onContinue,
-}: {
-  selected: RoleOption | null;
-  onSelect: (role: RoleOption) => void;
-  onContinue: () => void;
-}) {
+const CARD_H  = 64;   // px — fixed card height
+const CARD_GAP = 10;  // px — gap between cards
+const SLOT     = CARD_H + CARD_GAP; // total vertical space per card
+const VISIBLE_CARDS = 5;
+
+function FloatingSignalFeed() {
+  // Double the list so the loop is seamless
+  const doubled = [...LIVE_SIGNALS, ...LIVE_SIGNALS];
+  const loopDistance = LIVE_SIGNALS.length * SLOT; // translate distance for one full cycle
+  const duration = LIVE_SIGNALS.length * 2.4;      // seconds — one card every 2.4s
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans px-4 py-12">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-10">
-        {[3, 4, 5].map((n) => (
+    <div
+      className="w-full overflow-hidden relative"
+      style={{ height: VISIBLE_CARDS * SLOT - CARD_GAP }}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-4 z-10"
+        style={{ background: "linear-gradient(to bottom, rgba(30,27,75,0.5), transparent)" }} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-4 z-10"
+        style={{ background: "linear-gradient(to top, rgba(30,27,75,0.5), transparent)" }} />
+      <style>{`
+        @keyframes ticker {
+          0%   { transform: translateY(0); }
+          100% { transform: translateY(-${loopDistance}px); }
+        }
+      `}</style>
+
+      <div
+        className="flex flex-col"
+        style={{
+          gap: CARD_GAP,
+          animation: `ticker ${duration}s linear infinite`,
+        }}
+      >
+        {doubled.map((s, i) => (
           <div
-            key={n}
-            className={`h-1.5 rounded-full transition-all ${
-              n === 3 ? "w-8 bg-[#6366F1]" : "w-4 bg-[#E5E7EB]"
-            }`}
+            key={i}
+            className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-xl px-3 shrink-0"
+            style={{ height: CARD_H }}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden bg-white"
+              style={{ color: s.color }}
+            >
+              <img
+                src={`https://logo.clearbit.com/${s.domain}`}
+                alt={s.name}
+                className="w-full h-full object-contain p-1"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  if (e.currentTarget.parentElement) {
+                    e.currentTarget.parentElement.style.background = s.bg;
+                    e.currentTarget.parentElement.textContent = s.initials;
+                  }
+                }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{s.name}</p>
+              <p className="text-[11px] text-indigo-300 truncate">{s.signal}</p>
+            </div>
+            <Icon icon={s.icon} className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Step 2 — Radar sonar rings behind the counters
+
+function RadarRings() {
+  return (
+    <>
+      <style>{`
+        @keyframes radar-ring {
+          0%   { transform: scale(0.4); opacity: 0.5; }
+          100% { transform: scale(2.6); opacity: 0; }
+        }
+      `}</style>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="absolute rounded-full border border-indigo-500/35"
+          style={{
+            width: 120, height: 120,
+            top: "50%", left: "50%",
+            marginTop: -60, marginLeft: -60,
+            animation: `radar-ring 2.6s ease-out ${i * 0.87}s infinite`,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// Step 3 — Auto-cycling role preview cards
+
+const ROLE_VISUALS = [
+  {
+    id: "ae",
+    icon: "solar:user-check-rounded-bold",
+    accentColor: "#818CF8",
+    label: "Account Executive",
+    features: [
+      { icon: "solar:target-bold",    label: "Deal signals" },
+      { icon: "solar:graph-up-bold",  label: "Account health" },
+      { icon: "solar:bell-bing-bold", label: "Buying alerts" },
+    ],
+  },
+  {
+    id: "sdr",
+    icon: "solar:users-group-rounded-bold",
+    accentColor: "#34D399",
+    label: "SDR / BDR",
+    features: [
+      { icon: "solar:bolt-bold",          label: "Trigger events" },
+      { icon: "solar:filter-bold",        label: "ICP match score" },
+      { icon: "solar:list-check-bold",    label: "Sequencing ready" },
+    ],
+  },
+  {
+    id: "founder",
+    icon: "solar:rocket-bold",
+    accentColor: "#FBBF24",
+    label: "Founder",
+    features: [
+      { icon: "solar:magic-stick-3-bold", label: "Pipeline from zero" },
+      { icon: "solar:letter-bold",        label: "Auto-personalized" },
+      { icon: "solar:chart-square-bold",  label: "Full-funnel view" },
+    ],
+  },
+] as const;
+
+function RoleCycler() {
+  const [active, setActive] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setActive((p) => (p + 1) % ROLE_VISUALS.length);
+        setVisible(true);
+      }, 280);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, []);
+
+  const r = ROLE_VISUALS[active];
+
+  return (
+    <div className="flex flex-col items-center gap-5 w-full max-w-[260px]">
+      <style>{`
+        @keyframes card-in { from { opacity:0; transform:translateY(10px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+      `}</style>
+
+      <div
+        key={active}
+        className="w-full rounded-2xl p-5 flex flex-col gap-4 border border-white/10"
+        style={{
+          background: "rgba(255,255,255,0.07)",
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.25s ease",
+          animation: visible ? "card-in 0.3s ease-out" : undefined,
+        }}
+      >
+        {/* Role icon + name */}
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: `${r.accentColor}22` }}
+          >
+            <Icon icon={r.icon} className="w-5 h-5" style={{ color: r.accentColor }} />
+          </div>
+          <span className="text-sm font-semibold text-white">{r.label}</span>
+        </div>
+
+        {/* Feature chips */}
+        <div className="flex flex-col gap-2">
+          {r.features.map((f) => (
+            <div key={f.label} className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center shrink-0">
+                <Icon icon={f.icon} className="w-3.5 h-3.5" style={{ color: r.accentColor }} />
+              </div>
+              <span className="text-xs text-indigo-200">{f.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Progress dots */}
+      <div className="flex items-center gap-2">
+        {ROLE_VISUALS.map((_, i) => (
+          <div
+            key={i}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === active ? 24 : 6,
+              height: 6,
+              background: i === active ? "#fff" : "rgba(165,180,252,0.35)",
+            }}
           />
         ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="max-w-lg w-full flex flex-col gap-8">
-        <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-semibold text-[#0F0F0F]">
-            What best describes your role?
-          </h2>
-          <p className="text-sm text-[#6B7280]">
-            We'll personalise your setup based on how you sell.
-          </p>
+function Step1Email({ onSubmit }: Step1Props) {
+  const [email, setEmail]         = useState("");
+  const [name, setName]           = useState("");
+  const [password, setPassword]   = useState("");
+  const [linkedin, setLinkedin]   = useState("");
+  const [showPw, setShowPw]       = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const emailValid   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const nameValid    = name.trim().length > 0;
+  const passwordValid = password.length >= 8;
+  const canSubmit    = emailValid && nameValid && passwordValid;
+
+  const emailError    = submitted && !emailValid    ? "Enter a valid work email." : submitted && isPersonalEmail(email) ? "Use your work email." : "";
+  const nameError     = submitted && !nameValid     ? "Name is required." : "";
+  const passwordError = submitted && !passwordValid ? "At least 8 characters." : "";
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitted(true);
+    if (!canSubmit) return;
+    if (isPersonalEmail(email)) return;
+    onSubmit({ email, name: name.trim(), password, linkedin: linkedin.trim() });
+  }
+
+  const panel = (
+    <div className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+      <div className="flex flex-col gap-1.5 text-center">
+        <h2 className="text-[2rem] font-bold text-white leading-tight">
+          Live signals.<br />Right now.
+        </h2>
+        <p className="text-xs text-indigo-400">Accounts matching your ICP — already moving</p>
+      </div>
+      <FloatingSignalFeed />
+    </div>
+  );
+
+  const mobileTop = (
+    <div className="w-full flex items-center justify-between px-6 py-4">
+      <img src={logoLight} alt="Pristine" className="h-6 w-auto" />
+      <OnboardingDots step={1} total={4} />
+    </div>
+  );
+
+  return (
+    <SplitLayout panel={panel} mobileTop={mobileTop}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1">
+          <OnboardingDots step={1} total={4} />
+          <h1 className="text-2xl font-semibold text-[#0F0F0F] mt-3">Create your account</h1>
+          <p className="text-sm text-[#6B7280]">Start finding pipeline in under 2 minutes</p>
         </div>
 
-        {/* 2×3 grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {ROLE_OPTIONS.map(({ label, icon }) => {
-            const isSelected = selected === label;
+        {/* Work email */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email" className="text-sm font-medium text-[#374151]">Work email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setSubmitted(false); }}
+            placeholder="you@company.com"
+            autoFocus
+            className={`border rounded-lg px-3 py-2.5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none transition-colors ${
+              emailError ? "border-red-400 focus:border-red-400" : "border-[#E5E7EB] focus:border-[#6366F1]"
+            }`}
+          />
+          {emailError && <p className="text-xs text-red-500">{emailError}</p>}
+        </div>
+
+        {/* Full name */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="name" className="text-sm font-medium text-[#374151]">Full name</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Alex Smith"
+            className={`border rounded-lg px-3 py-2.5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none transition-colors ${
+              nameError ? "border-red-400 focus:border-red-400" : "border-[#E5E7EB] focus:border-[#6366F1]"
+            }`}
+          />
+          {nameError && <p className="text-xs text-red-500">{nameError}</p>}
+        </div>
+
+        {/* Password */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="password" className="text-sm font-medium text-[#374151]">Password</label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min. 8 characters"
+              className={`w-full border rounded-lg px-3 py-2.5 pr-10 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none transition-colors ${
+                passwordError ? "border-red-400 focus:border-red-400" : "border-[#E5E7EB] focus:border-[#6366F1]"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280]"
+            >
+              <Icon icon={showPw ? "solar:eye-closed-linear" : "solar:eye-linear"} className="w-4 h-4" />
+            </button>
+          </div>
+          {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+        </div>
+
+        {/* LinkedIn — optional */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="linkedin" className="text-sm font-medium text-[#374151]">LinkedIn profile</label>
+            <span className="text-xs text-[#9CA3AF]">Optional · helps personalise your workspace</span>
+          </div>
+          <div className="relative">
+            <Icon icon="solar:linkedin-bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+            <input
+              id="linkedin"
+              type="url"
+              value={linkedin}
+              onChange={(e) => setLinkedin(e.target.value)}
+              placeholder="linkedin.com/in/yourname"
+              className="w-full border border-[#E5E7EB] rounded-lg pl-9 pr-3 py-2.5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#6366F1] transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 pt-1">
+          <button
+            type="submit"
+            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Create account
+          </button>
+          <p className="text-center text-xs text-[#6B7280]">
+            Already have an account?{" "}
+            <a href="/sign-in" className="text-[#6366F1] font-medium hover:underline">Sign in</a>
+          </p>
+        </div>
+      </form>
+    </SplitLayout>
+  );
+}
+
+// ─── Step 2 — Company Discovery Confirmation (split-screen) ──────────────────
+
+function ICPChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EEF2FF] text-[#4338CA]">
+      {label}
+    </span>
+  );
+}
+
+// Animates a number from 0 to `target` over `duration` ms
+function useCountUp(target: number, duration = 1400): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let start: number | null = null;
+    let raf: number;
+    function step(ts: number) {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      // easeOut cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
+interface StatProps { value: number; label: string; suffix?: string }
+
+function AnimatedStat({ value, label, suffix = "" }: StatProps) {
+  const displayed = useCountUp(value);
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-4xl font-bold text-white tabular-nums tracking-tight">
+        {displayed}{suffix}
+      </span>
+      <span className="text-xs text-indigo-300 text-center leading-snug">{label}</span>
+    </div>
+  );
+}
+
+function PulseDots() {
+  return (
+    <div className="flex items-center gap-2">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-indigo-400"
+          style={{
+            animation: `pulse 1.4s ease-in-out ${i * 0.22}s infinite`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50%       { opacity: 1;   transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+interface Step2DiscoveryProps {
+  email: string;
+  enriched: EnrichedCompany;
+  icp: ICPConfig;
+  onContinue: () => void;
+}
+
+function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProps) {
+  // TODO: Replace mock stats with real enrichment API response
+  const domain = email.split("@")[1] ?? "";
+  const companySummary = [
+    enriched.companyName,
+    enriched.industry,
+    `${enriched.teamSize} employees`,
+    enriched.location,
+  ].join(", ");
+
+  const panel = (
+    <div className="flex flex-col items-center gap-8 text-center w-full">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[2rem] font-bold text-white leading-tight">
+          We did your<br />homework.
+        </h2>
+        <p className="text-xs text-indigo-400">Before you clicked anything.</p>
+      </div>
+
+      {/* Radar + counters */}
+      <div className="relative flex items-center justify-center w-full" style={{ height: 220 }}>
+        <RadarRings />
+        <div className="relative z-10 grid grid-cols-2 gap-x-12 gap-y-8">
+          <AnimatedStat value={847} label="Accounts scanned" />
+          <AnimatedStat value={23}  label="Live signals" />
+          <AnimatedStat value={94}  label="ICP match" suffix="%" />
+          <AnimatedStat value={1}   label="Site analyzed" />
+        </div>
+      </div>
+
+      <PulseDots />
+    </div>
+  );
+
+  const mobileTop = (
+    <div className="w-full flex items-center justify-around px-6 py-4">
+      {[
+        { value: 847, label: "Accounts" },
+        { value: 23,  label: "Signals" },
+        { value: 94,  label: "ICP %", suffix: "%" },
+      ].map((s) => (
+        <AnimatedStat key={s.label} value={s.value} label={s.label} suffix={s.suffix} />
+      ))}
+    </div>
+  );
+
+  return (
+    <SplitLayout
+      panel={panel}
+      mobileTop={mobileTop}
+      panelTagline="We started working before you signed up."
+    >
+      <div className="flex flex-col gap-5">
+        <OnboardingDots step={2} total={4} />
+
+        {/* Status pill */}
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-xs font-medium text-[#166534] self-start">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
+          Pristine found your company
+        </span>
+
+        <h1 className="text-2xl font-semibold text-[#0F0F0F] -mt-1">
+          Here's what we found.
+        </h1>
+
+        {/* Company summary */}
+        <div className="flex items-center gap-1.5 flex-wrap -mt-2">
+          <p className="text-sm text-[#6B7280]">{companySummary}</p>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-xs text-[#6366F1] hover:underline shrink-0"
+            onClick={() => {/* TODO: inline edit */}}
+          >
+            <Icon icon="solar:pen-2-linear" className="w-3 h-3" />
+            Edit
+          </button>
+        </div>
+
+        {/* ICP container */}
+        <div className="rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#9CA3AF]">Your ICP</span>
+            <button type="button" className="text-xs text-[#6366F1] hover:underline" onClick={() => {/* TODO */}}>
+              Edit
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-[#9CA3AF]">Industry</span>
+              <div className="flex flex-wrap gap-1">
+                {(icp.industries ?? []).slice(0, 2).map((v) => <ICPChip key={v} label={v} />)}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-[#9CA3AF]">Company size</span>
+              <div className="flex flex-wrap gap-1">
+                <ICPChip label={`${icp.employeeMin ?? 50}–${icp.employeeMax ?? 1000}`} />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-[#9CA3AF]">Geography</span>
+              <div className="flex flex-wrap gap-1">
+                {(icp.geographies ?? []).slice(0, 1).map((v) => <ICPChip key={v} label={v} />)}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-[#9CA3AF]">Job titles</span>
+              <div className="flex flex-wrap gap-1">
+                {(icp.jobTitles ?? []).slice(0, 2).map((v) => <ICPChip key={v} label={v} />)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content for personalization */}
+        <div className="rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#9CA3AF]">
+            Content for personalization
+          </span>
+          <p className="text-sm text-[#6B7280]">
+            Pristine read your website and prepared content your reps can use to personalize outreach.
+          </p>
+          <div className="flex items-center justify-between mt-0.5">
+            <div className="flex items-center gap-1.5">
+              <Icon icon="solar:check-circle-bold" className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+              <span className="text-xs text-[#6366F1]">{domain}</span>
+            </div>
+            <button type="button" className="text-xs text-[#9CA3AF] hover:text-[#374151] hover:underline shrink-0" onClick={() => {/* TODO */}}>
+              Add more sources
+            </button>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onContinue}
+            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors"
+          >
+            Looks right, let's continue
+          </button>
+          <p className="text-center text-xs text-[#9CA3AF]">
+            You can edit all of this later in your settings.
+          </p>
+        </div>
+      </div>
+    </SplitLayout>
+  );
+}
+
+// ─── Step 3 — Role Selection ──────────────────────────────────────────────────
+
+type RoleId = "ae" | "sdr" | "founder";
+
+interface RoleOption {
+  id: RoleId;
+  icon: string;
+  label: string;
+  sublabel: string;
+}
+
+const ROLE_OPTIONS: RoleOption[] = [
+  {
+    id: "ae",
+    icon: "solar:user-check-rounded-linear",
+    label: "I manage named accounts",
+    sublabel: "Senior AE or Account Manager",
+  },
+  {
+    id: "sdr",
+    icon: "solar:users-group-rounded-linear",
+    label: "I run high-volume outbound",
+    sublabel: "SDR, BDR, or Demand Gen",
+  },
+  {
+    id: "founder",
+    icon: "solar:rocket-linear",
+    label: "I'm a founder doing sales",
+    sublabel: "0 to 1, wearing all hats",
+  },
+];
+
+interface Step3Props {
+  onSelect: (role: RoleId) => void;
+}
+
+function Step3Role({ onSelect }: Step3Props) {
+  const [selected, setSelected] = useState<RoleId | null>(null);
+
+  function handleSelect(role: RoleId) {
+    setSelected(role);
+    setTimeout(() => onSelect(role), 300);
+  }
+
+  const panel = (
+    <div className="flex flex-col items-center gap-6 text-center">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[2rem] font-bold text-white leading-tight">
+          Built for how<br />you sell.
+        </h2>
+        <p className="text-xs text-indigo-400">Your role shapes your entire workspace</p>
+      </div>
+      <RoleCycler />
+    </div>
+  );
+
+  const mobileTop = (
+    <div className="w-full flex items-center justify-between px-6 py-4">
+      <img src={logoLight} alt="Pristine" className="h-6 w-auto" />
+      <OnboardingDots step={3} total={4} />
+    </div>
+  );
+
+  return (
+    <SplitLayout panel={panel} mobileTop={mobileTop} panelTagline="Your pipeline, before you ask.">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <OnboardingDots step={3} total={4} />
+          <h1 className="text-2xl font-semibold text-[#0F0F0F] mt-3">How do you sell?</h1>
+          <p className="text-sm text-[#6B7280]">This helps us build the right experience for you</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {ROLE_OPTIONS.map((opt) => {
+            const isSelected = selected === opt.id;
             return (
               <button
-                key={label}
+                key={opt.id}
                 type="button"
-                onClick={() => onSelect(label)}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-4 text-left transition-all ${
-                  isSelected
-                    ? "border-[#6366F1] bg-[#EEF2FF]"
-                    : "border-[#E5E7EB] bg-white hover:border-[#A5B4FC] hover:bg-[#F5F6FF]"
+                onClick={() => handleSelect(opt.id)}
+                className={`flex items-center gap-4 rounded-xl border-2 px-4 py-4 text-left transition-all ${
+                  isSelected ? "border-[#6366F1] bg-indigo-50" : "border-[#E5E7EB] bg-white hover:border-[#A5B4FC]"
                 }`}
               >
-                <span
-                  className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
-                    isSelected ? "bg-[#6366F1]" : "bg-[#F3F4F6]"
-                  }`}
-                >
-                  <Icon
-                    icon={icon}
-                    className={`w-5 h-5 ${isSelected ? "text-white" : "text-[#6B7280]"}`}
-                  />
+                <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? "bg-[#EEF2FF]" : "bg-[#F3F4F6]"}`}>
+                  <Icon icon={opt.icon} className={`w-5 h-5 ${isSelected ? "text-[#6366F1]" : "text-[#6B7280]"}`} />
                 </span>
-                <span
-                  className={`text-sm font-medium leading-snug ${
-                    isSelected ? "text-[#4338CA]" : "text-[#374151]"
-                  }`}
-                >
-                  {label}
-                </span>
+                <div>
+                  <p className={`text-sm font-semibold ${isSelected ? "text-[#4338CA]" : "text-[#111827]"}`}>
+                    {opt.label}
+                  </p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">{opt.sublabel}</p>
+                </div>
               </button>
             );
           })}
         </div>
-
-        <button
-          type="button"
-          disabled={!selected}
-          onClick={onContinue}
-          className="rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Continue
-        </button>
       </div>
-    </div>
+    </SplitLayout>
   );
 }
 
-// ─── Step 4 — Plan Selection ───────────────────────────────────────────────
+// ─── Step 4 — Loading Screen ──────────────────────────────────────────────────
 
-interface PlanDef {
-  id: PlanId;
-  name: string;
-  price: string;
-  priceNote?: string;
-  badge?: string;
-  features: string[];
-  cta: string;
-  showNoCCNote: boolean;
-}
-
-const PLANS: PlanDef[] = [
-  {
-    id: "free",
-    name: "Free",
-    price: "$0/month",
-    features: [
-      "1 Watchlist (up to 10 accounts)",
-      "5 Opportunity Playbooks",
-      "Signal feed (last 7 days)",
-      "Community support",
-    ],
-    cta: "Start free",
-    showNoCCNote: false,
-  },
-  {
-    id: "basic",
-    name: "Basic",
-    price: "$29/month",
-    priceNote: "billed monthly",
-    badge: "Most popular",
-    features: [
-      "3 Watchlists (up to 50 accounts each)",
-      "50 Opportunity Playbooks",
-      "Signal feed (real-time)",
-      "Email support",
-      "500 enrichment credits/month",
-    ],
-    cta: "Start Basic",
-    showNoCCNote: true,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$79/month",
-    priceNote: "billed monthly",
-    features: [
-      "Unlimited Watchlists",
-      "Unlimited Playbooks",
-      "Signal feed (real-time + priority signals)",
-      "CRM integration (HubSpot, Salesforce)",
-      "2,000 enrichment credits/month",
-      "Priority support",
-    ],
-    cta: "Start Pro",
-    showNoCCNote: true,
-  },
+const FINAL_MESSAGES = [
+  "Reading your website...",
+  "Building your ICP...",
+  "Finding accounts with active signals...",
+  "Preparing your first playbook...",
+  "Your workspace is ready.",
 ];
 
-function StepPlanSelection({
-  selected,
-  onSelect,
-  onContinue,
-}: {
-  selected: PlanId | null;
-  onSelect: (plan: PlanId) => void;
-  onContinue: (plan: PlanId) => void;
-}) {
+interface Step4Props {
+  role: RoleId;
+  onDone: () => void;
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+
+const CONFETTI_COLORS = ["#6366F1", "#818CF8", "#A5B4FC", "#10B981", "#34D399", "#FCD34D"];
+const CONFETTI_COUNT = 56;
+
+function ConfettiBurst({ show }: { show: boolean }) {
+  if (!show) return null;
+  const particles = Array.from({ length: CONFETTI_COUNT }, (_, i) => ({
+    id: i,
+    x: 10 + Math.random() * 80,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    w: 4 + Math.random() * 5,
+    h: Math.random() > 0.5 ? 3 + Math.random() * 3 : 5 + Math.random() * 5,
+    round: Math.random() > 0.6,
+    delay: Math.random() * 0.5,
+    dur: 1.4 + Math.random() * 1.2,
+    rot: Math.random() * 800 - 400,
+    drift: (Math.random() - 0.5) * 80,
+  }));
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans px-4 py-12">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-10">
-        {[3, 4, 5].map((n) => (
-          <div
-            key={n}
-            className={`h-1.5 rounded-full transition-all ${
-              n === 4 ? "w-8 bg-[#6366F1]" : "w-4 bg-[#E5E7EB]"
-            }`}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-3xl w-full flex flex-col gap-8">
-        <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-semibold text-[#0F0F0F]">
-            Choose your plan
-          </h2>
-          <p className="text-sm text-[#6B7280]">
-            Start free, upgrade anytime.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PLANS.map((plan) => {
-            const isSelected = selected === plan.id;
-            return (
-              <div
-                key={plan.id}
-                onClick={() => onSelect(plan.id)}
-                className={`relative flex flex-col rounded-2xl border-2 p-6 cursor-pointer transition-all ${
-                  isSelected
-                    ? "border-[#6366F1] bg-[#EEF2FF]"
-                    : "border-[#E5E7EB] bg-white hover:border-[#A5B4FC]"
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366F1] text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    {plan.badge}
-                  </span>
-                )}
-
-                <div className="mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-1">
-                    {plan.name}
-                  </p>
-                  <p className="text-2xl font-bold text-[#0F0F0F]">
-                    {plan.price}
-                  </p>
-                  {plan.priceNote && (
-                    <p className="text-xs text-[#9CA3AF]">{plan.priceNote}</p>
-                  )}
-                </div>
-
-                <ul className="flex flex-col gap-2 flex-1 mb-6">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-[#374151]">
-                      <Icon
-                        icon="solar:check-circle-bold"
-                        className="w-4 h-4 text-[#6366F1] flex-shrink-0 mt-0.5"
-                      />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(plan.id);
-                      onContinue(plan.id);
-                    }}
-                    className="rounded-full bg-[#6366F1] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#4F46E5] transition-colors"
-                  >
-                    {plan.cta}
-                  </button>
-                  {plan.showNoCCNote && (
-                    <p className="text-xs text-center text-[#9CA3AF]">
-                      No credit card required during beta.
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 50 }}>
+      <style>{`
+        @keyframes cf {
+          0%   { transform: translate(0, -20px) rotate(0deg) scale(1); opacity: 1; }
+          70%  { opacity: 1; }
+          100% { transform: translate(var(--dx), 110vh) rotate(var(--rot)) scale(0.6); opacity: 0; }
+        }
+      `}</style>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: `${p.x}%`,
+            top: "-20px",
+            width: p.w,
+            height: p.h,
+            borderRadius: p.round ? "50%" : 2,
+            backgroundColor: p.color,
+            "--rot": `${p.rot}deg`,
+            "--dx": `${p.drift}px`,
+            animation: `cf ${p.dur}s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${p.delay}s forwards`,
+          } as React.CSSProperties}
+        />
+      ))}
     </div>
   );
 }
 
-// ─── Step 5 — ICP Defaults ────────────────────────────────────────────────
+// ─── Step 4 Loading ───────────────────────────────────────────────────────────
 
-const INDUSTRY_OPTIONS = [
-  "Software / SaaS",
-  "Financial Services",
-  "Healthcare",
-  "Manufacturing",
-  "Professional Services",
-  "Other",
-];
+function Step4Loading({ role, onDone }: Step4Props) {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [textVisible, setTextVisible] = useState(true);
+  const [complete, setComplete] = useState(false);
+  const [showButton, setShowButton] = useState(false);
 
-const COMPANY_SIZE_OPTIONS = [
-  "1–10",
-  "11–50",
-  "51–200",
-  "201–500",
-  "501–1,000",
-  "1,000+",
-];
-
-const GEO_OPTIONS = [
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Europe",
-  "APAC",
-  "Global",
-];
-
-function StepICPDefaults({
-  icp,
-  onChange,
-  onContinue,
-}: {
-  icp: ICPState;
-  onChange: (next: ICPState) => void;
-  onContinue: () => void;
-}) {
-  const [addingTitle, setAddingTitle] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const addInputRef = useRef<HTMLInputElement>(null);
+  void role;
 
   useEffect(() => {
-    if (addingTitle) addInputRef.current?.focus();
-  }, [addingTitle]);
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-  function toggleGeo(geo: string) {
-    const next = icp.geography.includes(geo)
-      ? icp.geography.filter((g) => g !== geo)
-      : [...icp.geography, geo];
-    onChange({ ...icp, geography: next });
-  }
+    // Each transition: fade out → swap → fade in
+    const transitions = [700, 1500, 2300, 3000];
+    transitions.forEach((t, i) => {
+      timers.push(setTimeout(() => {
+        setTextVisible(false);
+        timers.push(setTimeout(() => {
+          setMsgIndex(i + 1);
+          setTextVisible(true);
+        }, 220));
+      }, t));
+    });
 
-  function removeTitle(title: string) {
-    onChange({ ...icp, jobTitles: icp.jobTitles.filter((t) => t !== title) });
-  }
+    timers.push(setTimeout(() => setComplete(true), 3400));
+    timers.push(setTimeout(() => setShowButton(true), 3900));
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
-  function commitNewTitle() {
-    const t = newTitle.trim();
-    if (t && !icp.jobTitles.includes(t)) {
-      onChange({ ...icp, jobTitles: [...icp.jobTitles, t] });
-    }
-    setNewTitle("");
-    setAddingTitle(false);
-  }
+  const isReady = msgIndex === FINAL_MESSAGES.length - 1 && complete;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans px-4 py-12">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-10">
-        {[3, 4, 5].map((n) => (
+    <>
+      <ConfettiBurst show={showButton} />
+
+      <div className="min-h-screen bg-[#F8F8FA] flex flex-col items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-10 w-full max-w-sm text-center">
+
+          {/* Icon — hero, no box, glow via shadow */}
           <div
-            key={n}
-            className={`h-1.5 rounded-full transition-all ${
-              n === 5 ? "w-8 bg-[#6366F1]" : "w-4 bg-[#E5E7EB]"
-            }`}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-lg w-full flex flex-col gap-8">
-        <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-semibold text-[#0F0F0F]">
-            Here's what we know about your ideal customer.
-          </h2>
-          <p className="text-sm text-[#6B7280]">
-            We pre-filled this from your company's website. Adjust anything that's off.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-5">
-          {/* Industry */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[#374151]">Industry</label>
-            <select
-              value={icp.industry}
-              onChange={(e) => onChange({ ...icp, industry: e.target.value })}
-              className="border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] w-full focus:outline-none focus:border-[#6366F1] transition-colors bg-white"
-            >
-              {INDUSTRY_OPTIONS.map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Company size */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[#374151]">Company size</label>
-            <select
-              value={icp.companySize}
-              onChange={(e) => onChange({ ...icp, companySize: e.target.value })}
-              className="border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] w-full focus:outline-none focus:border-[#6366F1] transition-colors bg-white"
-            >
-              {COMPANY_SIZE_OPTIONS.map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Geography */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[#374151]">Geography</label>
-            <div className="flex flex-wrap gap-2">
-              {GEO_OPTIONS.map((geo) => {
-                const active = icp.geography.includes(geo);
-                return (
-                  <button
-                    key={geo}
-                    type="button"
-                    onClick={() => toggleGeo(geo)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                      active
-                        ? "bg-[#EEF2FF] border-[#6366F1] text-[#4338CA]"
-                        : "bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#A5B4FC]"
-                    }`}
-                  >
-                    {geo}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Job titles */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[#374151]">Job titles to target</label>
-            <div className="flex flex-wrap gap-2 items-center">
-              {icp.jobTitles.map((title) => (
-                <span
-                  key={title}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#EEF2FF] border border-[#6366F1] text-[#4338CA]"
-                >
-                  {title}
-                  <button
-                    type="button"
-                    onClick={() => removeTitle(title)}
-                    aria-label={`Remove ${title}`}
-                    className="text-[#6366F1] hover:text-[#4338CA] transition-colors"
-                  >
-                    <Icon icon="solar:close-circle-bold" className="w-3.5 h-3.5" />
-                  </button>
-                </span>
-              ))}
-
-              {addingTitle ? (
-                <span className="flex items-center gap-1">
-                  <input
-                    ref={addInputRef}
-                    type="text"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") commitNewTitle();
-                      if (e.key === "Escape") { setAddingTitle(false); setNewTitle(""); }
-                    }}
-                    onBlur={commitNewTitle}
-                    placeholder="e.g. Head of Demand Gen"
-                    className="border border-[#6366F1] rounded-full px-3 py-1.5 text-xs text-[#111827] focus:outline-none w-44 placeholder:text-[#9CA3AF]"
-                  />
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAddingTitle(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-[#D1D5DB] text-xs text-[#6B7280] hover:border-[#6366F1] hover:text-[#6366F1] transition-colors"
-                >
-                  <Icon icon="solar:add-circle-linear" className="w-3.5 h-3.5" />
-                  Add title
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={onContinue}
-            className="rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors"
+            className={`transition-all duration-700 ${isReady ? "scale-110" : "scale-100"}`}
+            style={{
+              filter: isReady
+                ? "drop-shadow(0 0 24px rgba(99,102,241,0.45))"
+                : "drop-shadow(0 0 8px rgba(99,102,241,0.2))",
+            }}
           >
-            Continue
-          </button>
-          <p className="text-xs text-center text-[#9CA3AF]">
-            You can update your ICP anytime from Settings.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Skip Setup Link ──────────────────────────────────────────────────────────
-
-function SkipSetupLink({ onSkip }: { onSkip: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onSkip}
-      className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline-offset-2 hover:underline transition-colors"
-    >
-      Skip setup
-    </button>
-  );
-}
-
-// ─── Step 6 — Watchlist Population ───────────────────────────────────────────
-
-type WatchlistMethod = "recommendations" | "upload" | "crm";
-
-function StepWatchlist({
-  selectedPlan,
-  onComplete,
-  onSkip,
-}: {
-  selectedPlan: PlanId | null;
-  onComplete: () => void;
-  onSkip: () => void;
-}) {
-  const [showUpload, setShowUpload] = useState(false);
-  const [showCrmModal, setShowCrmModal] = useState(false);
-  const [_chosen, setChosen] = useState<WatchlistMethod | null>(null);
-
-  function choose(method: WatchlistMethod) {
-    setChosen(method);
-    if (method === "upload") {
-      setShowUpload(true);
-    } else if (method === "crm") {
-      setShowCrmModal(true);
-    } else {
-      onComplete();
-    }
-  }
-
-  const isFreePlan = selectedPlan === "free" || selectedPlan === "basic" || selectedPlan === null;
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans px-4 py-12">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-10">
-        {[3, 4, 5, 6].map((n) => (
-          <div
-            key={n}
-            className={`h-1.5 rounded-full transition-all ${
-              n === 6 ? "w-8 bg-[#6366F1]" : "w-4 bg-[#E5E7EB]"
-            }`}
-          />
-        ))}
-      </div>
-
-      <div className="max-w-lg w-full flex flex-col gap-8">
-        <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-semibold text-[#0F0F0F]">
-            How do you want to start your Watchlist?
-          </h2>
-          <p className="text-sm text-[#6B7280]">
-            We'll track signals and intent for these accounts automatically.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* Card 1 — Recommendations */}
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 flex flex-col gap-4 hover:border-[#A5B4FC] transition-colors">
-            <div className="flex items-start gap-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#EEF2FF] flex items-center justify-center">
-                <Icon icon="solar:magic-stick-3-bold" className="w-5 h-5 text-[#6366F1]" />
-              </span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-[#111827]">Use Pristine's recommendations</p>
-                  <span className="text-[10px] font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] px-2 py-0.5 rounded-full">
-                    Fastest setup — 30 seconds
-                  </span>
-                </div>
-                <p className="text-xs text-[#6B7280] leading-relaxed">
-                  We've already identified <span className="font-semibold text-[#374151]">12 accounts</span> that match your ICP. We'll start tracking them now.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => choose("recommendations")}
-              className="rounded-full bg-[#6366F1] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#4F46E5] transition-colors self-start"
-            >
-              Start with recommendations
-            </button>
+            <Icon
+              icon={isReady ? "solar:verified-check-bold" : "solar:magic-stick-3-bold"}
+              className={`w-16 h-16 transition-all duration-500 ${
+                isReady ? "text-[#6366F1]" : "text-[#6366F1] animate-pulse"
+              }`}
+            />
           </div>
 
-          {/* Card 2 — Upload */}
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 flex flex-col gap-4 hover:border-[#A5B4FC] transition-colors">
-            <div className="flex items-start gap-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#F3F4F6] flex items-center justify-center">
-                <Icon icon="solar:upload-bold" className="w-5 h-5 text-[#6B7280]" />
-              </span>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#111827] mb-1">Upload my account list</p>
-                <p className="text-xs text-[#6B7280] leading-relaxed">
-                  Have a CSV or Excel file? Upload your list of target accounts and we'll start tracking them.
-                </p>
-              </div>
+          {/* Single cycling message */}
+          <div className="flex flex-col gap-2 min-h-[64px] items-center justify-center">
+            <p
+              className={`transition-all duration-300 ${
+                textVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+              } ${
+                isReady
+                  ? "text-2xl font-semibold text-[#0F0F0F] tracking-tight"
+                  : "text-base text-[#4B5563]"
+              }`}
+              style={{ transitionProperty: "opacity, transform" }}
+            >
+              {FINAL_MESSAGES[msgIndex]}
+            </p>
+            {isReady && (
+              <p className="text-sm text-[#6B7280] transition-all duration-500 opacity-100">
+                Everything is set up and ready for you.
+              </p>
+            )}
+          </div>
+
+          {/* Thin progress track */}
+          {!isReady && (
+            <div className="w-full max-w-[200px] h-0.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#6366F1] rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${((msgIndex + 1) / FINAL_MESSAGES.length) * 100}%` }}
+              />
             </div>
-            {showUpload ? (
-              <div className="rounded-xl border-2 border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-6 flex flex-col items-center gap-3 text-center">
-                <Icon icon="solar:document-bold" className="w-8 h-8 text-[#9CA3AF]" />
-                <p className="text-sm text-[#374151] font-medium">Drop your file here</p>
-                <p className="text-xs text-[#9CA3AF]">Accepts .csv and .xlsx</p>
-                <label className="rounded-full border border-[#D1D5DB] bg-white text-[#374151] px-4 py-2 text-xs font-medium cursor-pointer hover:bg-[#F3F4F6] transition-colors">
-                  Browse file
-                  <input type="file" accept=".csv,.xlsx" className="hidden" onChange={() => onComplete()} />
-                </label>
-                <button
-                  type="button"
-                  onClick={onComplete}
-                  className="text-xs text-[#6366F1] hover:underline"
-                >
-                  Continue anyway →
-                </button>
-              </div>
-            ) : (
+          )}
+
+          {/* CTA */}
+          <div className={`w-full transition-all duration-500 ${showButton ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+            {showButton && (
               <button
                 type="button"
-                onClick={() => choose("upload")}
-                className="rounded-full border border-[#D1D5DB] text-[#374151] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-[#F3F4F6] hover:border-[#A5B4FC] transition-colors self-start"
+                onClick={onDone}
+                className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3.5 text-sm font-semibold hover:bg-[#4F46E5] transition-colors duration-200 shadow-lg shadow-indigo-200"
               >
-                Upload a file
+                Enter your workspace
               </button>
             )}
           </div>
 
-          {/* Card 3 — CRM */}
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 flex flex-col gap-4 hover:border-[#A5B4FC] transition-colors">
-            <div className="flex items-start gap-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#F3F4F6] flex items-center justify-center">
-                <Icon icon="solar:plug-circle-bold" className="w-5 h-5 text-[#6B7280]" />
-              </span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-[#111827]">Connect my CRM</p>
-                  {isFreePlan && (
-                    <span className="text-[10px] font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-2 py-0.5 rounded-full">
-                      Pro plan only
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-[#6B7280] leading-relaxed">
-                  Link HubSpot or Salesforce and we'll pull your book of business automatically. We'll even create separate watchlists per rep.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => choose("crm")}
-              className="rounded-full border border-[#D1D5DB] text-[#374151] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-[#F3F4F6] hover:border-[#A5B4FC] transition-colors self-start"
-            >
-              Connect CRM
-            </button>
-          </div>
-        </div>
-
-        <div className="flex justify-center">
-          <SkipSetupLink onSkip={onSkip} />
         </div>
       </div>
-
-      {/* CRM stub modal */}
-      {showCrmModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full flex flex-col items-center gap-4 text-center shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] flex items-center justify-center">
-              <Icon icon="solar:plug-circle-bold" className="w-6 h-6 text-[#6366F1]" />
-            </div>
-            <p className="text-base font-semibold text-[#0F0F0F]">CRM integration coming up</p>
-            <p className="text-sm text-[#6B7280] leading-relaxed">
-              CRM integration setup will complete after your account is created.
-            </p>
-            <button
-              type="button"
-              onClick={() => { setShowCrmModal(false); onComplete(); }}
-              className="rounded-full bg-[#6366F1] text-white px-6 py-2.5 text-sm font-semibold hover:bg-[#4F46E5] transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Final Loading Screen ─────────────────────────────────────────────────────
-
-const FINAL_MESSAGES = [
-  "Building your Watchlist...",
-  "Setting up your signal feed...",
-  "Your workspace is ready.",
-];
-
-function FinalLoadingScreen({ onDone }: { onDone: () => void }) {
-  const [msgIndex, setMsgIndex] = useState(0);
-  const [showButton, setShowButton] = useState(false);
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setMsgIndex(1), 800));
-    timers.push(setTimeout(() => setMsgIndex(2), 1700));
-    timers.push(setTimeout(() => setShowButton(true), 2500));
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-[#0D0D1A] flex flex-col items-center justify-center font-sans px-4">
-      <div className="flex flex-col items-center gap-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#1E1B4B] flex items-center justify-center">
-          {showButton ? (
-            <Icon icon="solar:check-circle-bold" className="w-8 h-8 text-[#6366F1]" />
-          ) : (
-            <Icon icon="solar:magic-stick-3-bold" className="w-8 h-8 text-[#6366F1] animate-pulse" />
-          )}
-        </div>
-
-        <div className="space-y-2">
-          {FINAL_MESSAGES.map((msg, i) => (
-            <p
-              key={msg}
-              className={`text-base font-medium transition-all duration-500 ${
-                i === msgIndex
-                  ? "text-white opacity-100"
-                  : i < msgIndex
-                  ? "text-[#4B5563] opacity-60"
-                  : "opacity-0"
-              }`}
-            >
-              {msg}
-            </p>
-          ))}
-        </div>
-
-        {showButton && (
-          <button
-            type="button"
-            onClick={onDone}
-            className="mt-4 rounded-full bg-[#6366F1] text-white px-8 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors animate-in fade-in duration-500"
-          >
-            Go to your dashboard
-          </button>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 
 // ─── Root Component ───────────────────────────────────────────────────────────
 
+type WizardStep = 1 | 2 | 3 | 4;
+
 export default function SIOnboarding() {
   const navigate = useNavigate();
-  const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
 
-  const [step, setStep] = useState<WizardStep>(3);
-  const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
-  const [icp, setIcp] = useState<ICPState>({
-    industry: "Software / SaaS",
-    companySize: "51–200",
-    geography: ["United States"],
-    jobTitles: getDefaultTitlesForRole("Account Executive"),
+  const [step, setStep] = useState<WizardStep>(1);
+  const [email, setEmail] = useState("");
+  const [enriched, setEnriched] = useState<EnrichedCompany>({
+    companyName: "Your Company",
+    industry: "B2B SaaS",
+    teamSize: "11-50",
+    location: "San Francisco, CA",
   });
+  const [role, setRole] = useState<RoleId>("ae");
 
-  const firstName = profile?.name?.split(" ")[0] ?? "";
-  const roleTitle = profile?.role ?? "";
-
-  // Update ICP job titles when role is selected
-  function handleRoleSelect(role: RoleOption) {
-    setSelectedRole(role);
-    setIcp((prev) => ({ ...prev, jobTitles: getDefaultTitlesForRole(role) }));
-  }
-
-  function skipToFinalLoading() {
-    setStep("finalLoading");
-  }
-
-  // ── Loading screen (after step 5) ───────────────────────────────────────
+  // ICP silent detection — fires once when loading screen mounts
   useEffect(() => {
-    if (step !== "loading") return;
-    const timer = setTimeout(() => setStep("confirmation"), 2200);
-    return () => clearTimeout(timer);
+    if (step !== 4) return;
+    const profile = useUserProfileStore.getState().profile;
+    if (!profile) return;
+    const detectedICP = deriveICPFromCompany(
+      profile.industry ?? "",
+      profile.role ?? ""
+    );
+    useUserProfileStore.getState().setProfile({ icp: detectedICP });
   }, [step]);
 
-  if (step === "loading") {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-[#EEF2FF] flex items-center justify-center">
-            <Icon
-              icon="solar:settings-bold"
-              className="w-7 h-7 text-[#6366F1] animate-spin"
-            />
-          </div>
-          <p className="text-base font-semibold text-[#0F0F0F]">
-            Setting up your workspace...
-          </p>
-          <p className="text-sm text-[#6B7280]">
-            Analysing your website and building your ICP
-          </p>
-        </div>
-      </div>
-    );
+  // ICP derived from enriched company for the discovery screen (no role yet)
+  const discoveryICP = deriveICPFromCompany(enriched.industry, "");
+
+  function handleStep1(data: Step1Data) {
+    const domain = data.email.split("@")[1] ?? "";
+    setEmail(data.email);
+    // TODO: Replace with real enrichment API call using domain
+    const result = mockEnrichDomain(domain);
+    setEnriched(result);
+    setProfile({
+      email: data.email,
+      name: data.name,
+      ...(data.linkedin ? { linkedin: data.linkedin } : {}),
+    });
+    setStep(2);
   }
 
-  if (step === "confirmation") {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans px-4">
-        <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#ECFDF5] flex items-center justify-center">
-            <Icon
-              icon="solar:check-circle-bold"
-              className="w-8 h-8 text-[#10B981]"
-            />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-[#0F0F0F]">
-              You're all set{firstName ? `, ${firstName}` : ""}
-            </h2>
-            <p className="text-sm text-[#6B7280] leading-relaxed">
-              {getRoleCategory(roleTitle) === "sdr"
-                ? "Your ICP has been generated from your website. Let's find your first batch of target accounts."
-                : "Your ICP has been generated from your website. Review and edit it anytime in settings."}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setProfile({ onboardingCompleted: true });
-              navigate(getRoleCategory(roleTitle) === "sdr" ? "/si/icp" : "/si/watchlist");
-            }}
-            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-medium hover:bg-[#4F46E5] transition-colors"
-          >
-            {getRoleCategory(roleTitle) === "sdr"
-              ? "Discover your target accounts"
-              : "Start building your watchlist"}
-          </button>
-        </div>
-      </div>
-    );
+  function handleStep2Continue() {
+    setProfile({
+      company: enriched.companyName,
+      industry: enriched.industry,
+    });
+    setStep(3);
   }
 
-  if (step === "finalLoading") {
+  function handleStep3(selectedRole: RoleId) {
+    setRole(selectedRole);
+    setProfile({ role: selectedRole });
+    setStep(4);
+  }
+
+  function handleDone() {
+    setProfile({ onboardingCompleted: true });
+    const category = getRoleCategory(role);
+    if (category === "sdr") {
+      navigate("/si/icp");
+    } else {
+      navigate("/si/watchlist");
+    }
+  }
+
+  if (step === 1) return <Step1Email onSubmit={handleStep1} />;
+  if (step === 2)
     return (
-      <FinalLoadingScreen
-        onDone={() => {
-          setProfile({ onboardingCompleted: true });
-          navigate("/si/dashboard");
-        }}
+      <Step2Discovery
+        email={email}
+        enriched={enriched}
+        icp={discoveryICP}
+        onContinue={handleStep2Continue}
       />
     );
-  }
-
-  if (step === 3) {
-    return (
-      <div className="relative">
-        <StepRoleSelection
-          selected={selectedRole}
-          onSelect={handleRoleSelect}
-          onContinue={() => setStep(4)}
-        />
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center">
-          <SkipSetupLink onSkip={skipToFinalLoading} />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 4) {
-    return (
-      <div className="relative">
-        <StepPlanSelection
-          selected={selectedPlan}
-          onSelect={setSelectedPlan}
-          onContinue={(plan) => {
-            setSelectedPlan(plan);
-            setStep(5);
-          }}
-        />
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center">
-          <SkipSetupLink onSkip={skipToFinalLoading} />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 5) {
-    return (
-      <div className="relative">
-        <StepICPDefaults
-          icp={icp}
-          onChange={setIcp}
-          onContinue={() => setStep(6)}
-        />
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center">
-          <SkipSetupLink onSkip={skipToFinalLoading} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <StepWatchlist
-      selectedPlan={selectedPlan}
-      onComplete={() => setStep("finalLoading")}
-      onSkip={skipToFinalLoading}
-    />
-  );
+  if (step === 3) return <Step3Role onSelect={handleStep3} />;
+  return <Step4Loading role={role} onDone={handleDone} />;
 }

@@ -119,7 +119,7 @@ const App = () => (
           <Route path="/landing" element={<SILanding />} />
           {/* Replaced by SIOnboardingWizard — kept for reference */}
           {/* <Route path="/sign-up" element={<SISignUp />} /> */}
-          <Route path="/signup" element={<SIOnboardingWizard />} />
+          <Route path="/signup" element={<SIOnboarding />} />
           <Route path="/sign-in" element={<SISignIn />} />
           <Route element={<SILayout />}>
             <Route path="/si" element={<Navigate to="/si/dashboard" replace />} />

@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import type { ICPConfig } from "@/lib/si/types";
 import { INDUSTRIES, GEOGRAPHIES } from "@/lib/si/constants";
+import { useUserProfileStore } from "@/lib/si/userProfileStore";
 
 export interface ICPControlsPanelProps {
   initialIcp: ICPConfig;
@@ -46,6 +48,7 @@ function ChipSelector({
 
 export default function ICPControlsPanel({ initialIcp, onUpdate }: ICPControlsPanelProps) {
   const [local, setLocal] = useState<ICPConfig>({ ...initialIcp });
+  const profile = useUserProfileStore((s) => s.profile);
 
   const handleSubmit = () => {
     onUpdate(local);
@@ -53,6 +56,17 @@ export default function ICPControlsPanel({ initialIcp, onUpdate }: ICPControlsPa
 
   return (
     <div className="flex flex-col gap-5">
+      {/* ICP detected status */}
+      {profile?.icp && (
+        <div className="flex items-start gap-2 rounded-xl border border-[#D1FAE5] bg-[#ECFDF5] px-4 py-3">
+          <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#10B981] mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-[#065F46]">ICP detected from your website</p>
+            <p className="text-xs text-[#047857] mt-0.5">Edit the filters below to refine your target profile.</p>
+          </div>
+        </div>
+      )}
+
       {/* Heading */}
       <div className="flex items-center justify-between">
         <div>

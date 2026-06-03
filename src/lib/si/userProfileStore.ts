@@ -6,10 +6,12 @@ interface UserProfile {
   name: string;
   email: string;
   company: string;
+  industry: string;
   icp: ICPConfig | null;
   signalPreferences: SignalType[];
   signalDelivery: "platform" | "daily_email" | "weekly_email";
   role: string;
+  linkedin?: string;
 }
 
 interface UserProfileState {
