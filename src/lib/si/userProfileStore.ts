@@ -14,14 +14,25 @@ interface UserProfile {
   linkedin?: string;
 }
 
+type PlanId = "free" | "starter" | "pro";
+
+interface Credits {
+  plan: PlanId;
+  used: number;
+  total: number;
+}
+
 interface UserProfileState {
   onboardingCompleted: boolean;
   profile: UserProfile | null;
   watchedAccounts: WatchlistAccount[];
+  credits: Credits;
   setOnboardingCompleted: (value: boolean) => void;
   setProfile: (profile: Partial<UserProfile> & { onboardingCompleted?: boolean }) => void;
   addWatchedAccount: (account: WatchlistAccount) => void;
   clearWatchedAccounts: () => void;
+  useCredits: (amount: number) => void;
+  setPlan: (plan: PlanId) => void;
 }
 
 export const useUserProfileStore = create<UserProfileState>()(
@@ -30,6 +41,7 @@ export const useUserProfileStore = create<UserProfileState>()(
       onboardingCompleted: false,
       profile: null,
       watchedAccounts: [],
+      credits: { plan: "free", used: 23, total: 50 },
       setOnboardingCompleted: (value) => set({ onboardingCompleted: value }),
       setProfile: ({ onboardingCompleted: oc, ...profile }) =>
         set((s) => ({
@@ -39,6 +51,16 @@ export const useUserProfileStore = create<UserProfileState>()(
       addWatchedAccount: (account) =>
         set((s) => ({ watchedAccounts: [...s.watchedAccounts, account] })),
       clearWatchedAccounts: () => set({ watchedAccounts: [] }),
+      useCredits: (amount) =>
+        set((s) => ({ credits: { ...s.credits, used: Math.min(s.credits.used + amount, s.credits.total) } })),
+      setPlan: (plan) =>
+        set((s) => ({
+          credits: {
+            plan,
+            used: 0,
+            total: plan === "free" ? 50 : plan === "starter" ? 1500 : 3500,
+          },
+        })),
     }),
     { name: "si-user-profile" }
   )

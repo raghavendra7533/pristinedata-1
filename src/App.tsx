@@ -22,6 +22,7 @@ import SIOnboardingWizard from "./pages/si/SIOnboardingWizard";
 import SILanding from "./pages/si/SILanding";
 import SISignUp from "./pages/si/SISignUp";
 import SISignIn from "./pages/si/SISignIn";
+import SIPricingPage from "./pages/si/SIPricingPage";
 import OnboardingIntegrations from "./pages/OnboardingIntegrations";
 import Dashboard from "./pages/Dashboard";
 import TalentDashboard from "./pages/TalentDashboard";
@@ -136,6 +137,7 @@ const App = () => (
             <Route path="/si/mcp" element={<SIMcp />} />
             <Route path="/si/market-intelligence" element={<SIMarketIntelligence />} />
             <Route path="/si/integrations" element={<SIIntegrations />} />
+            <Route path="/si/pricing" element={<SIPricingPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -4,6 +4,65 @@ import { useState } from "react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 import logo from "@/assets/pristine-data-logo.svg";
 
+const PLAN_LABELS: Record<string, string> = {
+  free: "Free",
+  starter: "Starter",
+  pro: "Pro",
+};
+
+function CreditsWidget() {
+  const navigate = useNavigate();
+  const credits = useUserProfileStore((s) => s.credits);
+  const { used, total, plan } = credits;
+  const remaining = Math.max(total - used, 0);
+  const pct = Math.min((used / total) * 100, 100);
+  const isLow = pct >= 80;
+  const isFree = plan === "free";
+
+  const barColor = isLow ? "#EF4444" : plan === "pro" ? "#6366F1" : "#3B82F6";
+
+  return (
+    <div className="mx-2 mb-2 rounded-xl border px-3 py-3" style={{ borderColor: "var(--si-sidebar-border)", backgroundColor: "rgba(99,102,241,0.04)" }}>
+      {/* Plan badge + upgrade link */}
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5"
+          style={{ background: isFree ? "rgba(107,114,128,0.12)" : "rgba(99,102,241,0.12)", color: isFree ? "var(--si-sidebar-text)" : "#6366F1" }}>
+          <Icon icon={plan === "pro" ? "solar:crown-bold" : plan === "starter" ? "solar:rocket-bold" : "solar:star-outline"} width={10} />
+          {PLAN_LABELS[plan]}
+        </span>
+        {plan !== "pro" && (
+          <button
+            onClick={() => navigate("/si/pricing")}
+            className="text-[11px] font-semibold text-[#6366F1] hover:text-indigo-800 transition-colors flex items-center gap-0.5"
+          >
+            Upgrade
+            <Icon icon="solar:arrow-right-bold" width={10} />
+          </button>
+        )}
+      </div>
+
+      {/* Bar */}
+      <div className="h-1.5 rounded-full overflow-hidden mb-1.5" style={{ backgroundColor: "rgba(0,0,0,0.08)" }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: barColor }}
+        />
+      </div>
+
+      {/* Label */}
+      <div className="flex items-center justify-between">
+        <span className="text-[11px]" style={{ color: "var(--si-sidebar-text)" }}>
+          <span className="font-semibold" style={{ color: isLow ? "#EF4444" : "inherit" }}>{remaining.toLocaleString()}</span>
+          {" "}credits left
+        </span>
+        <span className="text-[10px]" style={{ color: "var(--si-sidebar-section-label)" }}>
+          of {total.toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const NAV_SECTIONS = [
   {
     label: "SALES CO-PILOT",
@@ -122,6 +181,9 @@ export function SISidebar() {
           {isDark ? "Light mode" : "Dark mode"}
         </button>
       </div>
+
+      {/* Credits widget */}
+      <CreditsWidget />
 
       {/* Bottom: user + sign out */}
       <div className="border-t px-2 py-3" style={{ borderColor: "var(--si-sidebar-border)" }}>
