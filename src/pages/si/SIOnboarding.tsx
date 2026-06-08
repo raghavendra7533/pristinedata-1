@@ -511,7 +511,7 @@ function ICPChip({ label }: { label: string }) {
 }
 
 // Animates a number from 0 to `target` over `duration` ms
-function useCountUp(target: number, duration = 1400): number {
+function useCountUp(target: number, duration = 1400, decimals = 0): string {
   const [value, setValue] = useState(0);
   useEffect(() => {
     let start: number | null = null;
@@ -519,21 +519,20 @@ function useCountUp(target: number, duration = 1400): number {
     function step(ts: number) {
       if (!start) start = ts;
       const progress = Math.min((ts - start) / duration, 1);
-      // easeOut cubic
       const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(eased * target));
+      setValue(eased * target);
       if (progress < 1) raf = requestAnimationFrame(step);
     }
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [target, duration]);
-  return value;
+  return value.toFixed(decimals);
 }
 
-interface StatProps { value: number; label: string; suffix?: string }
+interface StatProps { value: number; label: string; suffix?: string; decimals?: number }
 
-function AnimatedStat({ value, label, suffix = "" }: StatProps) {
-  const displayed = useCountUp(value);
+function AnimatedStat({ value, label, suffix = "", decimals = 0 }: StatProps) {
+  const displayed = useCountUp(value, 1400, decimals);
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-4xl font-bold text-white tabular-nums tracking-tight">
@@ -596,11 +595,10 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
       {/* Radar + counters */}
       <div className="relative flex items-center justify-center w-full" style={{ height: 220 }}>
         <RadarRings />
-        <div className="relative z-10 grid grid-cols-2 gap-x-12 gap-y-8">
+        <div className="relative z-10 flex gap-12">
           <AnimatedStat value={847} label="Accounts scanned" />
           <AnimatedStat value={23}  label="Live signals" />
-          <AnimatedStat value={94}  label="ICP match" suffix="%" />
-          <AnimatedStat value={1}   label="Site analyzed" />
+          <AnimatedStat value={7.4} label="Content IQ" decimals={1} />
         </div>
       </div>
 
@@ -610,13 +608,9 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
 
   const mobileTop = (
     <div className="w-full flex items-center justify-around px-6 py-4">
-      {[
-        { value: 847, label: "Accounts" },
-        { value: 23,  label: "Signals" },
-        { value: 94,  label: "ICP %", suffix: "%" },
-      ].map((s) => (
-        <AnimatedStat key={s.label} value={s.value} label={s.label} suffix={s.suffix} />
-      ))}
+      <AnimatedStat value={847} label="Accounts" />
+      <AnimatedStat value={23}  label="Signals" />
+      <AnimatedStat value={7.4} label="Content IQ" decimals={1} />
     </div>
   );
 
