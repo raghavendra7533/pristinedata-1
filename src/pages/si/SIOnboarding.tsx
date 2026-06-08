@@ -319,118 +319,7 @@ function RadarRings() {
   );
 }
 
-// Step 3 — Auto-cycling role preview cards
 
-const ROLE_VISUALS = [
-  {
-    id: "ae",
-    icon: "solar:user-check-rounded-bold",
-    accentColor: "#818CF8",
-    label: "Account Executive",
-    features: [
-      { icon: "solar:target-bold",    label: "Deal signals" },
-      { icon: "solar:graph-up-bold",  label: "Account health" },
-      { icon: "solar:bell-bing-bold", label: "Buying alerts" },
-    ],
-  },
-  {
-    id: "sdr",
-    icon: "solar:users-group-rounded-bold",
-    accentColor: "#34D399",
-    label: "SDR / BDR",
-    features: [
-      { icon: "solar:bolt-bold",          label: "Trigger events" },
-      { icon: "solar:filter-bold",        label: "ICP match score" },
-      { icon: "solar:list-check-bold",    label: "Sequencing ready" },
-    ],
-  },
-  {
-    id: "founder",
-    icon: "solar:rocket-bold",
-    accentColor: "#FBBF24",
-    label: "Founder",
-    features: [
-      { icon: "solar:magic-stick-3-bold", label: "Pipeline from zero" },
-      { icon: "solar:letter-bold",        label: "Auto-personalized" },
-      { icon: "solar:chart-square-bold",  label: "Full-funnel view" },
-    ],
-  },
-] as const;
-
-function RoleCycler() {
-  const [active, setActive] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setActive((p) => (p + 1) % ROLE_VISUALS.length);
-        setVisible(true);
-      }, 280);
-    }, 2400);
-    return () => clearInterval(interval);
-  }, []);
-
-  const r = ROLE_VISUALS[active];
-
-  return (
-    <div className="flex flex-col items-center gap-5 w-full max-w-[260px]">
-      <style>{`
-        @keyframes card-in { from { opacity:0; transform:translateY(10px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-      `}</style>
-
-      <div
-        key={active}
-        className="w-full rounded-2xl p-5 flex flex-col gap-4 border border-white/10"
-        style={{
-          background: "rgba(255,255,255,0.07)",
-          opacity: visible ? 1 : 0,
-          transition: "opacity 0.25s ease",
-          animation: visible ? "card-in 0.3s ease-out" : undefined,
-        }}
-      >
-        {/* Role icon + name */}
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: `${r.accentColor}22` }}
-          >
-            <Icon icon={r.icon} className="w-5 h-5" style={{ color: r.accentColor }} />
-          </div>
-          <span className="text-sm font-semibold text-white">{r.label}</span>
-        </div>
-
-        {/* Feature chips */}
-        <div className="flex flex-col gap-2">
-          {r.features.map((f) => (
-            <div key={f.label} className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-md bg-white/10 flex items-center justify-center shrink-0">
-                <Icon icon={f.icon} className="w-3.5 h-3.5" style={{ color: r.accentColor }} />
-              </div>
-              <span className="text-xs text-indigo-200">{f.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Progress dots */}
-      <div className="flex items-center gap-2">
-        {ROLE_VISUALS.map((_, i) => (
-          <div
-            key={i}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width: i === active ? 24 : 6,
-              height: 6,
-              background: i === active ? "#fff" : "rgba(165,180,252,0.35)",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Step1Email({ onSubmit }: Step1Props) {
   const [email, setEmail]         = useState("");
@@ -579,6 +468,38 @@ function Step1Email({ onSubmit }: Step1Props) {
   );
 }
 
+// ─── Role types (shared by Step 2 and wizard) ────────────────────────────────
+
+type RoleId = "ae" | "sdr" | "founder";
+
+interface RoleOption {
+  id: RoleId;
+  icon: string;
+  label: string;
+  sublabel: string;
+}
+
+const ROLE_OPTIONS: RoleOption[] = [
+  {
+    id: "ae",
+    icon: "solar:user-check-rounded-linear",
+    label: "Named accounts",
+    sublabel: "Senior AE / AM",
+  },
+  {
+    id: "sdr",
+    icon: "solar:users-group-rounded-linear",
+    label: "High-volume outbound",
+    sublabel: "SDR, BDR, Demand Gen",
+  },
+  {
+    id: "founder",
+    icon: "solar:rocket-linear",
+    label: "Founder doing sales",
+    sublabel: "0 to 1, all hats",
+  },
+];
+
 // ─── Step 2 — Company Discovery Confirmation (split-screen) ──────────────────
 
 function ICPChip({ label }: { label: string }) {
@@ -649,10 +570,11 @@ interface Step2DiscoveryProps {
   email: string;
   enriched: EnrichedCompany;
   icp: ICPConfig;
-  onContinue: () => void;
+  onContinue: (role: RoleId) => void;
 }
 
 function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProps) {
+  const [selectedRole, setSelectedRole] = useState<RoleId | null>(null);
   // TODO: Replace mock stats with real enrichment API response
   const domain = email.split("@")[1] ?? "";
   const companySummary = [
@@ -705,7 +627,7 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
       panelTagline="We started working before you signed up."
     >
       <div className="flex flex-col gap-5">
-        <OnboardingDots step={2} total={4} />
+        <OnboardingDots step={2} total={3} />
 
         {/* Status pill */}
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-xs font-medium text-[#166534] self-start">
@@ -785,12 +707,43 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
           </div>
         </div>
 
+        {/* Role selection */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#9CA3AF]">How do you sell?</span>
+          <div className="grid grid-cols-3 gap-2">
+            {ROLE_OPTIONS.map((opt) => {
+              const isSelected = selectedRole === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setSelectedRole(opt.id)}
+                  className={`flex flex-col items-center gap-2 rounded-xl border-2 px-2 py-3 text-center transition-all ${
+                    isSelected ? "border-[#6366F1] bg-indigo-50" : "border-[#E5E7EB] bg-white hover:border-[#A5B4FC]"
+                  }`}
+                >
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSelected ? "bg-[#EEF2FF]" : "bg-[#F3F4F6]"}`}>
+                    <Icon icon={opt.icon} className={`w-4 h-4 ${isSelected ? "text-[#6366F1]" : "text-[#6B7280]"}`} />
+                  </span>
+                  <div>
+                    <p className={`text-xs font-semibold leading-tight ${isSelected ? "text-[#4338CA]" : "text-[#111827]"}`}>
+                      {opt.label}
+                    </p>
+                    <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-tight">{opt.sublabel}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* CTA */}
         <div className="flex flex-col gap-2 pt-1">
           <button
             type="button"
-            onClick={onContinue}
-            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors"
+            onClick={() => selectedRole && onContinue(selectedRole)}
+            disabled={!selectedRole}
+            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Looks right, let's continue
           </button>
@@ -803,109 +756,7 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
   );
 }
 
-// ─── Step 3 — Role Selection ──────────────────────────────────────────────────
-
-type RoleId = "ae" | "sdr" | "founder";
-
-interface RoleOption {
-  id: RoleId;
-  icon: string;
-  label: string;
-  sublabel: string;
-}
-
-const ROLE_OPTIONS: RoleOption[] = [
-  {
-    id: "ae",
-    icon: "solar:user-check-rounded-linear",
-    label: "I manage named accounts",
-    sublabel: "Senior AE or Account Manager",
-  },
-  {
-    id: "sdr",
-    icon: "solar:users-group-rounded-linear",
-    label: "I run high-volume outbound",
-    sublabel: "SDR, BDR, or Demand Gen",
-  },
-  {
-    id: "founder",
-    icon: "solar:rocket-linear",
-    label: "I'm a founder doing sales",
-    sublabel: "0 to 1, wearing all hats",
-  },
-];
-
-interface Step3Props {
-  onSelect: (role: RoleId) => void;
-}
-
-function Step3Role({ onSelect }: Step3Props) {
-  const [selected, setSelected] = useState<RoleId | null>(null);
-
-  function handleSelect(role: RoleId) {
-    setSelected(role);
-    setTimeout(() => onSelect(role), 300);
-  }
-
-  const panel = (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[2rem] font-bold text-white leading-tight">
-          Built for how<br />you sell.
-        </h2>
-        <p className="text-xs text-indigo-400">Your role shapes your entire workspace</p>
-      </div>
-      <RoleCycler />
-    </div>
-  );
-
-  const mobileTop = (
-    <div className="w-full flex items-center justify-between px-6 py-4">
-      <img src={logoLight} alt="Pristine" className="h-6 w-auto" />
-      <OnboardingDots step={3} total={4} />
-    </div>
-  );
-
-  return (
-    <SplitLayout panel={panel} mobileTop={mobileTop} panelTagline="Your pipeline, before you ask.">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <OnboardingDots step={3} total={4} />
-          <h1 className="text-2xl font-semibold text-[#0F0F0F] mt-3">How do you sell?</h1>
-          <p className="text-sm text-[#6B7280]">This helps us build the right experience for you</p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {ROLE_OPTIONS.map((opt) => {
-            const isSelected = selected === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => handleSelect(opt.id)}
-                className={`flex items-center gap-4 rounded-xl border-2 px-4 py-4 text-left transition-all ${
-                  isSelected ? "border-[#6366F1] bg-indigo-50" : "border-[#E5E7EB] bg-white hover:border-[#A5B4FC]"
-                }`}
-              >
-                <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? "bg-[#EEF2FF]" : "bg-[#F3F4F6]"}`}>
-                  <Icon icon={opt.icon} className={`w-5 h-5 ${isSelected ? "text-[#6366F1]" : "text-[#6B7280]"}`} />
-                </span>
-                <div>
-                  <p className={`text-sm font-semibold ${isSelected ? "text-[#4338CA]" : "text-[#111827]"}`}>
-                    {opt.label}
-                  </p>
-                  <p className="text-xs text-[#6B7280] mt-0.5">{opt.sublabel}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </SplitLayout>
-  );
-}
-
-// ─── Step 4 — Loading Screen ──────────────────────────────────────────────────
+// ─── Step 3 — Loading Screen ──────────────────────────────────────────────────
 
 const FINAL_MESSAGES = [
   "Reading your website...",
@@ -1078,7 +929,7 @@ function Step4Loading({ role, onDone }: Step4Props) {
 
 // ─── Root Component ───────────────────────────────────────────────────────────
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3;
 
 export default function SIOnboarding() {
   const navigate = useNavigate();
@@ -1096,7 +947,7 @@ export default function SIOnboarding() {
 
   // ICP silent detection — fires once when loading screen mounts
   useEffect(() => {
-    if (step !== 4) return;
+    if (step !== 3) return;
     const profile = useUserProfileStore.getState().profile;
     if (!profile) return;
     const detectedICP = deriveICPFromCompany(
@@ -1123,18 +974,14 @@ export default function SIOnboarding() {
     setStep(2);
   }
 
-  function handleStep2Continue() {
+  function handleStep2Continue(selectedRole: RoleId) {
+    setRole(selectedRole);
     setProfile({
       company: enriched.companyName,
       industry: enriched.industry,
+      role: selectedRole,
     });
     setStep(3);
-  }
-
-  function handleStep3(selectedRole: RoleId) {
-    setRole(selectedRole);
-    setProfile({ role: selectedRole });
-    setStep(4);
   }
 
   function handleDone() {
@@ -1157,6 +1004,5 @@ export default function SIOnboarding() {
         onContinue={handleStep2Continue}
       />
     );
-  if (step === 3) return <Step3Role onSelect={handleStep3} />;
   return <Step4Loading role={role} onDone={handleDone} />;
 }
