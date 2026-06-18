@@ -83,6 +83,15 @@ export interface PlaybookData {
   generatedAt: string;
 }
 
+export interface PlaybookListItem {
+  id: string;
+  accountId: string;
+  accountName: string;
+  status: "Active" | "Paused";
+  lastUpdated: string;
+  nextAction: string;
+}
+
 export interface OnboardingData {
   step: number;
   company: {
@@ -96,6 +105,7 @@ export interface OnboardingData {
   watchedDomains: string[];
   signalPreferences: SignalType[];
   signalDelivery: "platform" | "daily_email" | "weekly_email";
+  notificationChannel?: "platform" | "email" | "slack" | "whatsapp";
   role: {
     primaryRole: string;
     salesMotion: string;

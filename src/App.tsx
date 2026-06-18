@@ -10,19 +10,21 @@ import SIICPDiscovery from "./pages/si/SIICPDiscovery";
 import SIWatchlist from "./pages/si/SIWatchlist";
 import SISearch from "./pages/si/SISearch";
 import SIPlaybook from "./pages/si/SIPlaybook";
+import SIPlaybookList from "./pages/si/SIPlaybookList";
+import SIAccountView from "./pages/si/SIAccountView";
 import SISearchPeopleResults from "./pages/si/SISearchPeopleResults";
 import SISearchCompanyResults from "./pages/si/SISearchCompanyResults";
 import SISearchResults from "./pages/si/SISearchResults";
 import SIPersonPlaybook from "./pages/si/SIPersonPlaybook";
-import SIMcp from "./pages/si/SIMcp";
 import SIMarketIntelligence from "./pages/si/SIMarketIntelligence";
-import SIIntegrations from "./pages/si/SIIntegrations";
 import SIOnboarding from "./pages/si/SIOnboarding";
 import SIOnboardingWizard from "./pages/si/SIOnboardingWizard";
 import SILanding from "./pages/si/SILanding";
 import SISignUp from "./pages/si/SISignUp";
 import SISignIn from "./pages/si/SISignIn";
 import SIPricingPage from "./pages/si/SIPricingPage";
+import SICreditManagement from "./pages/si/SICreditManagement";
+import SISettings from "./pages/si/SISettings";
 import OnboardingIntegrations from "./pages/OnboardingIntegrations";
 import Dashboard from "./pages/Dashboard";
 import TalentDashboard from "./pages/TalentDashboard";
@@ -58,6 +60,7 @@ import AdminCampaignCalendar from "./pages/AdminCampaignCalendar";
 import AdminCapacityPlanner from "./pages/AdminCapacityPlanner";
 import ClientCapacityPlanner from "./pages/ClientCapacityPlanner";
 import AccountPlaybook from "./pages/AccountPlaybook";
+import Settings from "./pages/Settings";
 import Onboarding from "./pages/Onboarding";
 import SalesDashboard from "./pages/SalesDashboard";
 
@@ -104,7 +107,8 @@ const App = () => (
             <Route path="/sc-workspace" element={<SCWorkspace />} />
             <Route path="/content-iq" element={<ContentIQ />} />
             <Route path="/sales-openers-mockup" element={<SalesOpenersMockup />} />
-            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/admin" element={<Settings />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/admin-capacity" element={<AdminCapacityPlanner />} />
             <Route path="/admin-capacity/:clientId" element={<ClientCapacityPlanner />} />
             <Route path="/sales-dashboard" element={<SalesDashboard />} />
@@ -131,13 +135,17 @@ const App = () => (
             <Route path="/si/search/results/companies" element={<SISearchCompanyResults />} />
             <Route path="/si/icp" element={<Navigate to="/si/search" replace />} />
             <Route path="/si/watchlist" element={<SIWatchlist />} />
+            <Route path="/si/watchlist/:accountId" element={<SIAccountView />} />
+            <Route path="/si/accounts/:accountId" element={<SIAccountView />} />
             <Route path="/si/playbook/person/:personId" element={<SIPersonPlaybook />} />
             <Route path="/si/playbook/:accountId" element={<SIPlaybook />} />
-            <Route path="/si/playbook" element={<SIPlaybook />} />
-            <Route path="/si/mcp" element={<SIMcp />} />
+            <Route path="/si/playbook" element={<SIPlaybookList />} />
+            <Route path="/si/settings" element={<SISettings />} />
+            <Route path="/si/mcp" element={<Navigate to="/si/settings?tab=mcp" replace />} />
             <Route path="/si/market-intelligence" element={<SIMarketIntelligence />} />
-            <Route path="/si/integrations" element={<SIIntegrations />} />
+            <Route path="/si/integrations" element={<Navigate to="/si/settings?tab=integrations" replace />} />
             <Route path="/si/pricing" element={<SIPricingPage />} />
+            <Route path="/si/credits" element={<Navigate to="/si/settings?tab=credits" replace />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

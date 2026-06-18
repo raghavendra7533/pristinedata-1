@@ -1,4 +1,4 @@
-import type { SignalEvent, WatchlistAccount, ICPAccount, PlaybookData } from "./types";
+import type { SignalEvent, WatchlistAccount, ICPAccount, PlaybookData, PlaybookListItem } from "./types";
 
 // Helper: ISO date N days ago
 function daysAgo(n: number): string {
@@ -526,6 +526,53 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
     generatedAt: daysAgo(0),
   },
 };
+
+// ---------------------------------------------------------------------------
+// MOCK_PLAYBOOK_LIST — summary rows for the Playbook list view
+// ---------------------------------------------------------------------------
+
+export const MOCK_PLAYBOOK_LIST: PlaybookListItem[] = [
+  {
+    id: "pb-lattice",
+    accountId: "acc-lattice",
+    accountName: "Lattice",
+    status: "Active",
+    lastUpdated: daysAgo(1),
+    nextAction: "Send personalized intro email to new VP of Sales Engineering",
+  },
+  {
+    id: "pb-qualified",
+    accountId: "acc-qualified",
+    accountName: "Qualified",
+    status: "Active",
+    lastUpdated: daysAgo(2),
+    nextAction: "Draft exec-level outreach email referencing Pipeline Cloud expansion",
+  },
+  {
+    id: "pb-clari",
+    accountId: "acc-clari",
+    accountName: "Clari",
+    status: "Active",
+    lastUpdated: daysAgo(0),
+    nextAction: "Identify the hiring manager for the data infrastructure roles on LinkedIn",
+  },
+  {
+    id: "pb-gong",
+    accountId: "acc-gong",
+    accountName: "Gong",
+    status: "Paused",
+    lastUpdated: daysAgo(9),
+    nextAction: "Re-engage once mid-market launch settles",
+  },
+  {
+    id: "pb-6sense",
+    accountId: "acc-6sense",
+    accountName: "6sense",
+    status: "Active",
+    lastUpdated: daysAgo(4),
+    nextAction: "Follow up on EMEA expansion with localization angle",
+  },
+];
 
 // ---------------------------------------------------------------------------
 // DEMO_ACCOUNTS — shown when user has no real watched accounts

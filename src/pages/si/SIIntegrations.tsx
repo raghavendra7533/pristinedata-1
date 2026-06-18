@@ -360,7 +360,7 @@ function Banner({ variant, onDismiss }: { variant: "zero" | "partial"; onDismiss
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function SIIntegrations() {
+export default function SIIntegrations({ embedded = false }: { embedded?: boolean }) {
   const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -399,20 +399,22 @@ export default function SIIntegrations() {
   };
 
   return (
-    <div className="min-h-full p-8" style={{ backgroundColor: "var(--si-bg)" }}>
-      <div className="max-w-6xl mx-auto">
+    <div className={embedded ? "" : "min-h-full p-8"} style={embedded ? undefined : { backgroundColor: "var(--si-bg)" }}>
+      <div className={embedded ? "" : "max-w-6xl mx-auto"}>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-10">
 
           {/* ── Left column ─────────────────────────────────────────────── */}
           <div className="lg:sticky lg:top-8 self-start space-y-8">
-            <div>
-              <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--si-text-primary)" }}>
-                Integrations
-              </h1>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--si-text-secondary)" }}>
-                Connect Pristine to your existing stack. The more context we have, the sharper your signals.
-              </p>
-            </div>
+            {!embedded && (
+              <div>
+                <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--si-text-primary)" }}>
+                  Integrations
+                </h1>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--si-text-secondary)" }}>
+                  Connect Pristine to your existing stack. The more context we have, the sharper your signals.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-1">
               {CATEGORIES.map((cat) => {

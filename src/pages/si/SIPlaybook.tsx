@@ -6,6 +6,7 @@ import type { PlaybookData } from "@/lib/si/types";
 import { AccountContextPanel } from "@/components/si/playbook/AccountContextPanel";
 import { PlaybookTabs } from "@/components/si/playbook/PlaybookTabs";
 import { ScheduleMeetingModal } from "@/components/si/playbook/ScheduleMeetingModal";
+import { AddMeetingNotesModal } from "@/components/si/playbook/AddMeetingNotesModal";
 
 export default function SIPlaybook() {
   const { accountId } = useParams<{ accountId: string }>();
@@ -20,15 +21,18 @@ export default function SIPlaybook() {
 
   // Local state for next actions (so toggles persist without re-render issues)
   const [nextActions, setNextActions] = useState<PlaybookData["nextActions"]>(rawPlaybook.nextActions);
+  const [timeline, setTimeline] = useState<PlaybookData["timeline"]>(rawPlaybook.timeline);
 
   // Reset when account changes
   useEffect(() => {
     setNextActions(rawPlaybook.nextActions);
+    setTimeline(rawPlaybook.timeline);
   }, [accountId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Simulated "generate" loading
   const [isGenerating, setIsGenerating] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [hasMeetingNotes, setHasMeetingNotes] = useState(false);
   const [activeTabOverride, setActiveTabOverride] = useState<"Next Actions" | undefined>(undefined);
 
@@ -43,7 +47,17 @@ export default function SIPlaybook() {
     );
   }
 
-  const playbook: PlaybookData = { ...rawPlaybook, nextActions };
+  function handleSaveNotes(notes: string) {
+    setTimeline((prev) => [
+      ...prev,
+      { date: new Date().toISOString(), event: `Meeting notes added: "${notes.slice(0, 140)}${notes.length > 140 ? "…" : ""}"`, type: "meeting" as const },
+    ]);
+    setHasMeetingNotes(true);
+    setActiveTabOverride("Next Actions");
+    setShowNotesModal(false);
+  }
+
+  const playbook: PlaybookData = { ...rawPlaybook, nextActions, timeline };
 
   return (
     <div className="flex h-screen" data-theme="si">
@@ -76,6 +90,13 @@ export default function SIPlaybook() {
           >
             <Icon icon="solar:calendar-add-linear" className="w-4 h-4" />
             Schedule Meeting
+          </button>
+          <button
+            onClick={() => setShowNotesModal(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-[--si-card-border] text-[--si-text-primary] bg-transparent px-4 py-2 text-sm font-medium hover:bg-[--si-card-bg] transition-colors"
+          >
+            <Icon icon="solar:notes-linear" className="w-4 h-4" />
+            Add Meeting Notes
           </button>
           <button
             onClick={handleGenerate}
@@ -111,10 +132,13 @@ export default function SIPlaybook() {
         <ScheduleMeetingModal
           open={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
-          onScheduled={() => {
-            setHasMeetingNotes(true);
-            setActiveTabOverride("Next Actions");
-          }}
+          onScheduled={() => setShowScheduleModal(false)}
+        />
+
+        <AddMeetingNotesModal
+          open={showNotesModal}
+          onClose={() => setShowNotesModal(false)}
+          onSave={handleSaveNotes}
         />
 
         {/* Generated at label */}

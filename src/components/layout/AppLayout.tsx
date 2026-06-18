@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import pristineDataLogo from "@/assets/pristine-data-logo.svg";
+
+type Product = "outbound" | "si" | "shared";
 
 interface NavItem {
   icon: string;
   activeIcon: string;
   label: string;
   route?: string;
+  product: Product;
   children?: { label: string; route: string; icon: string }[];
 }
 
@@ -16,21 +19,25 @@ interface SidebarSection {
   items: NavItem[];
 }
 
+// Replace with userProfileStore.planState in production
+const USER_PLAN: "outbound_only" | "si_only" | "both" = "both"; // change to test
+
 const sidebarSections: SidebarSection[] = [
   {
     label: "PLATFORM",
     items: [
-      { icon: "solar:home-2-linear", activeIcon: "solar:home-2-bold", label: "Home", route: "/" },
-      { icon: "solar:magnifer-linear", activeIcon: "solar:magnifer-bold", label: "Search", route: "/search" },
+      { icon: "solar:home-2-linear", activeIcon: "solar:home-2-bold", label: "Home", route: "/", product: "shared" },
+      { icon: "solar:magnifer-linear", activeIcon: "solar:magnifer-bold", label: "Search", route: "/search", product: "shared" },
     ],
   },
   {
-    label: "INTELLIGENCE",
+    label: "OUTBOUND OS",
     items: [
       {
         icon: "solar:target-linear",
         activeIcon: "solar:target-bold",
         label: "Prospecting",
+        product: "outbound",
         children: [
           { label: "Lead Search", route: "/search", icon: "solar:magnifer-linear" },
           { label: "Lists", route: "/lists", icon: "solar:documents-linear" },
@@ -41,16 +48,23 @@ const sidebarSections: SidebarSection[] = [
         icon: "solar:magic-stick-3-linear",
         activeIcon: "solar:magic-stick-3-bold",
         label: "Personalization",
+        product: "outbound",
         children: [
           { label: "Sequence Builder", route: "/campaigns/create", icon: "solar:widget-linear" },
           { label: "Campaign Analytics", route: "/campaigns", icon: "solar:chart-linear" },
           { label: "Content HQ", route: "/personalization", icon: "solar:layers-linear" },
         ],
       },
+    ],
+  },
+  {
+    label: "SALES INTELLIGENCE",
+    items: [
       {
         icon: "solar:lightbulb-linear",
         activeIcon: "solar:lightbulb-bold",
         label: "Sales Intelligence",
+        product: "si",
         children: [
           { label: "Sales Dashboard", route: "/sales-dashboard", icon: "solar:chart-square-linear" },
           { label: "Opportunity Playbook", route: "/opportunities", icon: "solar:bolt-linear" },
@@ -63,16 +77,41 @@ const sidebarSections: SidebarSection[] = [
   {
     label: "SETTINGS",
     items: [
-      { icon: "solar:link-linear", activeIcon: "solar:link-bold", label: "Integrations", route: "/integrations" },
+      { icon: "solar:link-linear", activeIcon: "solar:link-bold", label: "Integrations", route: "/integrations", product: "shared" },
     ],
   },
 ];
+
+function isProductVisible(product: Product): boolean {
+  if (USER_PLAN === "both" || product === "shared") return true;
+  if (USER_PLAN === "outbound_only") return product === "outbound";
+  return product === "si";
+}
+
+const visibleSidebarSections: SidebarSection[] = sidebarSections
+  .map((section) => ({
+    ...section,
+    items: section.items.filter((item) => isProductVisible(item.product)),
+  }))
+  .filter((section) => section.items.length > 0);
 
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (isDark) {
@@ -94,7 +133,7 @@ export function AppLayout() {
 
   // Auto-expand parent if child route is active
   useEffect(() => {
-    sidebarSections.forEach((section) => {
+    visibleSidebarSections.forEach((section) => {
       section.items.forEach((item) => {
         if (item.children) {
           const hasActiveChild = item.children.some((child) =>
@@ -172,7 +211,7 @@ export function AppLayout() {
 
         {/* Nav */}
         <nav className="flex-1 py-4 overflow-y-auto">
-          {sidebarSections.map((section) => (
+          {visibleSidebarSections.map((section) => (
             <div key={section.label} className="mb-5">
               <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {section.label}
@@ -247,31 +286,85 @@ export function AppLayout() {
           ))}
         </nav>
 
-        {/* Try Sales Intelligence */}
-        <div className="px-3 pb-2">
-          <button
-            onClick={() => navigate("/si/start")}
-            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
-          >
-            <Icon icon="solar:lightning-linear" className="h-3.5 w-3.5 flex-shrink-0" />
-            Try Sales Intelligence
-          </button>
-        </div>
-
-        {/* Bottom — User */}
-        <div className="border-t border-border p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-foreground text-xs font-bold">SG</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">Single Grain</p>
-              <p className="text-xs text-muted-foreground truncate">Pro Plan</p>
+        {/* Cross-sell callout */}
+        {USER_PLAN === "outbound_only" && (
+          <div className="px-3 pb-3">
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-xs font-medium text-foreground">Get Account Intelligence</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 mb-2 leading-snug">
+                Track buying signals and build playbooks for target accounts.
+              </p>
+              <button
+                onClick={() => navigate("/pricing")}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 text-xs font-medium transition-colors"
+              >
+                Try Sales Intelligence
+              </button>
             </div>
           </div>
-          <button className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-            <Icon icon="solar:settings-linear" className="h-4 w-4" />
+        )}
+        {USER_PLAN === "si_only" && (
+          <div className="px-3 pb-3">
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-xs font-medium text-foreground">Run Outbound Campaigns</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 mb-2 leading-snug">
+                Sequence builder, campaign analytics, and AI-powered personalization.
+              </p>
+              <button
+                onClick={() => navigate("/pricing")}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 text-xs font-medium transition-colors"
+              >
+                Try Outbound OS
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom — User */}
+        <div className="border-t border-border p-3 relative" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-2.5 hover:bg-accent rounded-md px-1 py-1 transition-colors"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground text-xs font-bold">SG</span>
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-sm font-semibold text-foreground truncate">Single Grain</p>
+                <p className="text-xs text-muted-foreground truncate">Pro Plan</p>
+              </div>
+            </div>
+            <Icon
+              icon="solar:alt-arrow-up-linear"
+              className={`h-3.5 w-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${profileOpen ? "" : "rotate-180"}`}
+            />
           </button>
+
+          {/* Dropdown */}
+          {profileOpen && (
+            <div className="absolute bottom-full left-3 right-3 mb-1 rounded-lg border border-border bg-card shadow-lg py-1 z-50">
+              <div className="px-3 py-2 border-b border-border">
+                <p className="text-xs font-semibold text-foreground">Single Grain</p>
+                <p className="text-xs text-muted-foreground">admin@singlegrain.com</p>
+              </div>
+              <button
+                onClick={() => { navigate("/settings"); setProfileOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <Icon icon="solar:settings-linear" className="h-4 w-4" />
+                Settings
+              </button>
+              <div className="border-t border-border mt-1 pt-1">
+                <button
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Icon icon="solar:logout-2-linear" className="h-4 w-4" />
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         {import.meta.env.DEV && (
           <div className="px-3 pb-3">

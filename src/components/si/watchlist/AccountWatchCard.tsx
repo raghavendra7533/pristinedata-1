@@ -4,6 +4,7 @@ import type { WatchlistAccount } from "@/lib/si/types";
 interface AccountWatchCardProps {
   account: WatchlistAccount;
   onViewPlaybook: () => void;
+  onViewAccount: () => void;
   onRemove: () => void;
 }
 
@@ -19,7 +20,7 @@ function formatRelativeTime(isoDate: string): string {
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
-export function AccountWatchCard({ account, onViewPlaybook }: AccountWatchCardProps) {
+export function AccountWatchCard({ account, onViewPlaybook, onViewAccount }: AccountWatchCardProps) {
   const recentSignals = [...account.signals]
     .sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime())
     .slice(0, 3);
@@ -128,7 +129,13 @@ export function AccountWatchCard({ account, onViewPlaybook }: AccountWatchCardPr
         </div>
 
         {/* Right: CTA */}
-        <div className="shrink-0 flex items-center pl-2">
+        <div className="shrink-0 flex items-center gap-2 pl-2">
+          <button
+            onClick={onViewAccount}
+            className="border border-[--si-card-border] text-[--si-text-secondary] text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap transition-colors hover:bg-gray-50"
+          >
+            View Account
+          </button>
           <button
             onClick={onViewPlaybook}
             className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap transition-colors flex items-center gap-1"

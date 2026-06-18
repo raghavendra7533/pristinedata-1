@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { MOCK_WATCHLIST_ACCOUNTS } from "@/lib/si/mockData";
+import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS } from "@/lib/si/mockData";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 import { WatchlistFilterBar } from "@/components/si/watchlist/WatchlistFilterBar";
 import { AccountWatchCard } from "@/components/si/watchlist/AccountWatchCard";
@@ -120,6 +120,9 @@ export default function SIWatchlist() {
   }
 
   const totalSignals = filteredAccounts.reduce((sum, a) => sum + a.signals.length, 0);
+
+  const activePlaybookAccounts = filteredAccounts.filter((a) => MOCK_PLAYBOOKS[a.id]);
+  const watchingOnlyAccounts = filteredAccounts.filter((a) => !MOCK_PLAYBOOKS[a.id]);
 
   return (
     <div data-theme="si" className="p-6 flex flex-col gap-4">
@@ -305,15 +308,40 @@ export default function SIWatchlist() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {filteredAccounts.map((account) => (
-                <AccountWatchCard
-                  key={account.id}
-                  account={account}
-                  onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
-                  onRemove={() => handleRemove(account.id)}
-                />
-              ))}
+            <div className="flex flex-col gap-6">
+              {activePlaybookAccounts.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide">
+                    Active Playbooks ({activePlaybookAccounts.length})
+                  </p>
+                  {activePlaybookAccounts.map((account) => (
+                    <AccountWatchCard
+                      key={account.id}
+                      account={account}
+                      onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
+                      onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
+                      onRemove={() => handleRemove(account.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {watchingOnlyAccounts.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide">
+                    Watching — No Playbook Yet ({watchingOnlyAccounts.length})
+                  </p>
+                  {watchingOnlyAccounts.map((account) => (
+                    <AccountWatchCard
+                      key={account.id}
+                      account={account}
+                      onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
+                      onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
+                      onRemove={() => handleRemove(account.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>
