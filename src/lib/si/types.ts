@@ -25,6 +25,7 @@ export interface WatchlistAccount {
   id: string;
   accountName: string;
   domain: string;
+  description?: string;
   industry: string;
   revenue: string;
   employees: string;

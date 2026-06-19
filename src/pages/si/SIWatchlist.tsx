@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { useToast } from "@/hooks/use-toast";
 import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS } from "@/lib/si/mockData";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 import { WatchlistFilterBar } from "@/components/si/watchlist/WatchlistFilterBar";
+import type { ComputedFilters } from "@/components/si/watchlist/WatchlistFilterBar";
 import { AccountWatchCard } from "@/components/si/watchlist/AccountWatchCard";
 import { CreateWatchlistModal } from "@/components/si/watchlist/CreateWatchlistModal";
 import type { WatchlistAccount, SignalType } from "@/lib/si/types";
@@ -43,11 +45,15 @@ function dedupeById(accounts: WatchlistAccount[]): WatchlistAccount[] {
 
 export default function SIWatchlist() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { watchedAccounts, addWatchedAccount, profile } = useUserProfileStore();
 
   const [activeTab, setActiveTab] = useState<"accounts" | "contacts">("accounts");
-  const [signalFilter, setSignalFilter] = useState<string>("all");
-  const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
+  const [computedFilters, setComputedFilters] = useState<ComputedFilters>({
+    signalFilter: "all",
+    playbookFilter: "all",
+    timeRange: "7d",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
@@ -58,40 +64,33 @@ export default function SIWatchlist() {
     [watchedAccounts]
   );
 
+  const { signalFilter, playbookFilter, timeRange } = computedFilters;
+
   const filteredAccounts = useMemo(() => {
     const cutoff = new Date("2026-05-17T00:00:00.000Z");
     cutoff.setDate(cutoff.getDate() - TIME_RANGE_DAYS[timeRange]);
 
     return allAccounts.filter((account) => {
-      // Remove filter
       if (removedIds.has(account.id)) return false;
 
-      // Search filter
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        if (
-          !account.accountName.toLowerCase().includes(q) &&
-          !account.domain.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
+        if (!account.accountName.toLowerCase().includes(q) && !account.domain.toLowerCase().includes(q)) return false;
       }
 
-      // Signal type filter
       if (signalFilter !== "all") {
-        const hasSignalType = account.signals.some((s) => s.type === signalFilter);
-        if (!hasSignalType) return false;
+        if (!account.signals.some((s) => s.type === signalFilter)) return false;
       }
 
-      // Time range filter — keep account if at least one signal is within range
-      const hasRecentSignal = account.signals.some(
-        (s) => new Date(s.detectedAt) >= cutoff
-      );
+      if (playbookFilter === "has_playbook" && !MOCK_PLAYBOOKS[account.id]) return false;
+      if (playbookFilter === "no_playbook" && MOCK_PLAYBOOKS[account.id]) return false;
+
+      const hasRecentSignal = account.signals.some((s) => new Date(s.detectedAt) >= cutoff);
       if (!hasRecentSignal) return false;
 
       return true;
     });
-  }, [allAccounts, removedIds, searchQuery, signalFilter, timeRange]);
+  }, [allAccounts, removedIds, searchQuery, signalFilter, playbookFilter, timeRange]);
 
   function handleAdd(accountNames: string[], signals: SignalType[]) {
     for (const name of accountNames) {
@@ -277,10 +276,7 @@ export default function SIWatchlist() {
         <>
           {/* Filter bar */}
           <WatchlistFilterBar
-            activeSignalFilter={signalFilter}
-            onSignalFilterChange={setSignalFilter}
-            activeTimeRange={timeRange}
-            onTimeRangeChange={setTimeRange}
+            onFiltersChange={setComputedFilters}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
@@ -308,40 +304,21 @@ export default function SIWatchlist() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
-              {activePlaybookAccounts.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  <p className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide">
-                    Active Playbooks ({activePlaybookAccounts.length})
-                  </p>
-                  {activePlaybookAccounts.map((account) => (
-                    <AccountWatchCard
-                      key={account.id}
-                      account={account}
-                      onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
-                      onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
-                      onRemove={() => handleRemove(account.id)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {watchingOnlyAccounts.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  <p className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide">
-                    Watching — No Playbook Yet ({watchingOnlyAccounts.length})
-                  </p>
-                  {watchingOnlyAccounts.map((account) => (
-                    <AccountWatchCard
-                      key={account.id}
-                      account={account}
-                      onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
-                      onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
-                      onRemove={() => handleRemove(account.id)}
-                    />
-                  ))}
-                </div>
-              )}
+            <div className="flex flex-col gap-3">
+              {filteredAccounts.map((account) => {
+                const hasPlaybook = !!MOCK_PLAYBOOKS[account.id];
+                return (
+                  <AccountWatchCard
+                    key={account.id}
+                    account={account}
+                    hasPlaybook={hasPlaybook}
+                    onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
+                    onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
+                    onAddNote={() => toast({ title: "Note added.", description: `Logged a note for ${account.accountName}.` })}
+                    onRemove={() => handleRemove(account.id)}
+                  />
+                );
+              })}
             </div>
           )}
         </>

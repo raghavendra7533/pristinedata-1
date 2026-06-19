@@ -41,7 +41,7 @@ export const useUserProfileStore = create<UserProfileState>()(
       onboardingCompleted: false,
       profile: null,
       watchedAccounts: [],
-      credits: { plan: "free", used: 23, total: 50 },
+      credits: { plan: "pro", used: 23, total: 3500 },
       setOnboardingCompleted: (value) => set({ onboardingCompleted: value }),
       setProfile: ({ onboardingCompleted: oc, ...profile }) =>
         set((s) => ({
@@ -62,6 +62,6 @@ export const useUserProfileStore = create<UserProfileState>()(
           },
         })),
     }),
-    { name: "si-user-profile" }
+    { name: "si-user-profile", version: 2 }
   )
 );
