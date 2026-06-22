@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import type { PlaybookData } from "@/lib/si/types";
+import { Icon } from "@iconify/react";
+import type { PlaybookData, PlaybookPlay } from "@/lib/si/types";
 import { NextActionChecklist } from "./NextActionChecklist";
 import { TimelineItem } from "./TimelineItem";
 
@@ -11,7 +12,7 @@ interface PlaybookTabsProps {
   activeTabOverride?: Tab;
 }
 
-const TABS = ["Overview", "Discovery Questions", "Talking Points", "Next Actions", "Timeline"] as const;
+const TABS = ["Overview", "Strategy", "Call Prep", "Next Actions", "Timeline"] as const;
 type Tab = (typeof TABS)[number];
 
 const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string }> = {
@@ -20,12 +21,27 @@ const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string
   Low: { bg: "#F3F4F6", text: "#6B7280" },
 };
 
+const TIME_HORIZONS: PlaybookPlay["timeHorizon"][] = ["This week", "This month", "Before close"];
+
+const HORIZON_ICONS: Record<PlaybookPlay["timeHorizon"], string> = {
+  "This week": "solar:calendar-minimalistic-linear",
+  "This month": "solar:calendar-linear",
+  "Before close": "solar:flag-linear",
+};
+
 export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false, activeTabOverride }: PlaybookTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
 
   useEffect(() => {
     if (activeTabOverride) setActiveTab(activeTabOverride);
   }, [activeTabOverride]);
+
+  const groupedPlays = playbook.plays
+    ? TIME_HORIZONS.reduce<Record<string, PlaybookPlay[]>>((acc, h) => {
+        acc[h] = playbook.plays!.filter((p) => p.timeHorizon === h);
+        return acc;
+      }, {} as Record<string, PlaybookPlay[]>)
+    : {};
 
   return (
     <div>
@@ -52,27 +68,196 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
         })}
       </div>
 
-      {/* Tab content */}
+      {/* Overview */}
       {activeTab === "Overview" && (
         <div className="flex flex-col gap-6">
-          {/* Thesis */}
-          <div>
-            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-2">
-              Opportunity Thesis
-            </h3>
-            <p className="text-sm text-[--si-text-secondary] leading-relaxed">{playbook.thesis}</p>
+
+          {/* Summary */}
+          {playbook.summary && playbook.summary.length > 0 && (
+            <div
+              className="rounded-[14px] overflow-hidden"
+              style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+            >
+              <div
+                className="px-5 py-3.5 flex items-center justify-between"
+                style={{ borderBottom: "1px solid var(--si-card-border)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="solar:document-text-linear" className="w-4 h-4 text-indigo-500" />
+                  <h3 className="text-sm font-semibold text-[--si-text-primary]">Summary</h3>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                  1-min read
+                </span>
+              </div>
+              <ul className="px-5 py-4 flex flex-col gap-3">
+                {playbook.summary.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                    <p className="text-sm text-[--si-text-secondary] leading-relaxed">{point}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Success Criteria */}
+          {playbook.successCriteria && playbook.successCriteria.length > 0 && (
+            <div
+              className="rounded-[14px] overflow-hidden"
+              style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+            >
+              <div
+                className="px-5 py-3.5"
+                style={{ borderBottom: "1px solid var(--si-card-border)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="solar:target-linear" className="w-4 h-4 text-indigo-500" />
+                  <h3 className="text-sm font-semibold text-[--si-text-primary]">Outcome / success criteria</h3>
+                </div>
+              </div>
+              <ul className="px-5 py-4 flex flex-col gap-3">
+                {playbook.successCriteria.map((criterion, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <Icon icon="solar:check-circle-linear" className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-[--si-text-secondary] leading-relaxed">{criterion}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Plays by time horizon */}
+          {playbook.plays && playbook.plays.length > 0 && TIME_HORIZONS.map((horizon) => {
+            const plays = groupedPlays[horizon];
+            if (!plays || plays.length === 0) return null;
+            return (
+              <div key={horizon}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Icon icon={HORIZON_ICONS[horizon]} className="w-4 h-4 text-[--si-text-muted]" />
+                    <h3 className="text-sm font-semibold text-[--si-text-primary]">{horizon}</h3>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[--si-card-bg] border border-[--si-card-border] text-[--si-text-muted]">
+                    {plays.length} {plays.length === 1 ? "play" : "plays"}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {plays.map((play) => (
+                    <div
+                      key={play.id}
+                      className="rounded-[12px] px-4 py-3.5 flex items-center justify-between gap-4"
+                      style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-[--si-text-primary] leading-snug">{play.title}</p>
+                        <p className="text-xs text-[--si-text-muted] mt-0.5 leading-snug">{play.subtitle}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                        {play.assignee && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                            {play.assignee}
+                          </span>
+                        )}
+                        {play.actionLabels.map((label) => (
+                          <span
+                            key={label}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-[--si-card-border] text-[--si-text-secondary] hover:text-[--si-primary] hover:border-[--si-primary] cursor-pointer transition-colors"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Fallback if no new-format content */}
+          {!playbook.summary && !playbook.plays && (
+            <div>
+              <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-2">
+                Opportunity Thesis
+              </h3>
+              <p className="text-sm text-[--si-text-secondary] leading-relaxed">{playbook.thesis}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Strategy */}
+      {activeTab === "Strategy" && (
+        <div className="flex flex-col gap-6">
+
+          {/* Opportunity thesis */}
+          <div
+            className="rounded-[14px] overflow-hidden"
+            style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+          >
+            <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderBottom: "1px solid var(--si-card-border)" }}>
+              <Icon icon="solar:lightbulb-linear" className="w-4 h-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-[--si-text-primary]">Opportunity thesis</h3>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-3">
+              {playbook.thesis.split("\n\n").map((paragraph, i) => (
+                <p key={i} className="text-sm text-[--si-text-secondary] leading-relaxed">{paragraph}</p>
+              ))}
+            </div>
           </div>
 
-          {/* Fit Hypotheses */}
-          <div>
-            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-2">
-              Fit Hypotheses
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {playbook.fitHypotheses.map((h, i) => (
-                <li key={i} className="flex items-start gap-2">
+          {/* Deal objective */}
+          {playbook.dealObjective && playbook.dealObjective.length > 0 && (
+            <div
+              className="rounded-[14px] overflow-hidden"
+              style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+            >
+              <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderBottom: "1px solid var(--si-card-border)" }}>
+                <Icon icon="solar:target-linear" className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-[--si-text-primary]">Deal objective</h3>
+              </div>
+              <ul className="px-5 py-4 flex flex-col gap-3">
+                {playbook.dealObjective.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                    <p className="text-sm text-[--si-text-secondary] leading-relaxed">{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Top value hypotheses */}
+          <div
+            className="rounded-[14px] overflow-hidden"
+            style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+          >
+            <div
+              className="px-5 py-3.5 flex items-center justify-between"
+              style={{ borderBottom: "1px solid var(--si-card-border)" }}
+            >
+              <div className="flex items-center gap-2">
+                <Icon icon="solar:graph-up-linear" className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-sm font-semibold text-[--si-text-primary]">Top value hypotheses</h3>
+              </div>
+              {playbook.overallRisk && (
+                <span className="flex items-center gap-1.5 text-xs text-[--si-text-muted]">
+                  Overall risk:
                   <span
-                    className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-[4px] flex-shrink-0"
+                    className="font-semibold"
+                    style={{ color: playbook.overallRisk === "High" ? "#DC2626" : playbook.overallRisk === "Medium" ? "#D97706" : "#6B7280" }}
+                  >
+                    {playbook.overallRisk}
+                  </span>
+                </span>
+              )}
+            </div>
+            <ul className="px-5 py-4 flex flex-col gap-3">
+              {playbook.fitHypotheses.map((h, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span
+                    className="mt-0.5 inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-[4px] flex-shrink-0"
                     style={{
                       backgroundColor: PRIORITY_STYLES[h.priority].bg,
                       color: PRIORITY_STYLES[h.priority].text,
@@ -80,35 +265,122 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
                   >
                     {h.priority}
                   </span>
-                  <span className="text-sm text-[--si-text-primary] leading-snug">{h.text}</span>
+                  <span className="text-sm text-[--si-text-secondary] leading-snug">{h.text}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Landmines */}
-          <div>
-            <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-2">
-              Landmines
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {playbook.landmines.map((l, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span
-                    className="inline-block mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] flex-shrink-0"
-                    style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}
-                  >
-                    {l.category}
-                  </span>
-                  <span className="text-sm text-[--si-text-primary] leading-snug">{l.text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Deal risks & landmines */}
+          {playbook.dealRisks && playbook.dealRisks.length > 0 && (
+            <div
+              className="rounded-[14px] overflow-hidden"
+              style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+            >
+              <div
+                className="px-5 py-3.5 flex items-center justify-between"
+                style={{ borderBottom: "1px solid var(--si-card-border)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon icon="solar:danger-triangle-linear" className="w-4 h-4 text-rose-500" />
+                  <h3 className="text-sm font-semibold text-[--si-text-primary]">Deal risks &amp; landmines</h3>
+                </div>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[--si-card-border] text-[--si-text-muted]">
+                  {playbook.dealRisks.length} tracked
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--si-card-border)" }}>
+                      {["CATEGORY", "RISK", "IMPACT", "PROBABILITY", "OWNER", "MITIGATION"].map((col) => (
+                        <th
+                          key={col}
+                          className="px-4 py-2.5 text-left font-semibold tracking-wide text-[--si-text-muted] whitespace-nowrap"
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {playbook.dealRisks.map((risk, i) => (
+                      <tr
+                        key={i}
+                        style={i < playbook.dealRisks!.length - 1 ? { borderBottom: "1px solid var(--si-card-border)" } : {}}
+                      >
+                        <td className="px-4 py-3.5 align-top">
+                          <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-[--si-card-border] text-[--si-text-secondary]">
+                            {risk.category}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-[--si-text-primary] leading-relaxed max-w-[220px]">
+                          {risk.risk}
+                        </td>
+                        <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                          <span
+                            className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                            style={
+                              risk.impact === "High"
+                                ? { backgroundColor: "#DCFCE7", color: "#15803D" }
+                                : risk.impact === "Medium"
+                                ? { backgroundColor: "#FEF3C7", color: "#D97706" }
+                                : { backgroundColor: "#F3F4F6", color: "#6B7280" }
+                            }
+                          >
+                            {risk.impact}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                          <span
+                            className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                            style={
+                              risk.probability === "High"
+                                ? { backgroundColor: "#DCFCE7", color: "#15803D" }
+                                : risk.probability === "Medium"
+                                ? { backgroundColor: "#FEF3C7", color: "#D97706" }
+                                : { backgroundColor: "#F3F4F6", color: "#6B7280" }
+                            }
+                          >
+                            {risk.probability}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-[--si-text-secondary] whitespace-nowrap">
+                          {risk.owner}
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-[--si-text-secondary] leading-relaxed max-w-[240px]">
+                          {risk.mitigation}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback: show old landmines if no dealRisks */}
+          {!playbook.dealRisks && playbook.landmines.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold text-[--si-text-secondary] uppercase tracking-wide mb-2">Landmines</h3>
+              <ul className="flex flex-col gap-2">
+                {playbook.landmines.map((l, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="inline-block mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] flex-shrink-0" style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}>
+                      {l.category}
+                    </span>
+                    <span className="text-sm text-[--si-text-primary] leading-snug">{l.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
         </div>
       )}
 
-      {activeTab === "Discovery Questions" && (
+      {/* Call Prep */}
+      {activeTab === "Call Prep" && (
         <div className="flex flex-col gap-3">
           {playbook.discoveryQuestions.map((q, i) => (
             <div
@@ -135,19 +407,7 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
         </div>
       )}
 
-      {activeTab === "Talking Points" && (
-        <ol className="flex flex-col gap-3 list-none">
-          {playbook.talkingPoints.map((tp, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[--si-primary] text-white text-xs font-semibold flex items-center justify-center">
-                {i + 1}
-              </span>
-              <p className="text-sm text-[--si-text-primary] leading-snug pt-0.5">{tp.text}</p>
-            </li>
-          ))}
-        </ol>
-      )}
-
+      {/* Next Actions */}
       {activeTab === "Next Actions" && (
         hasMeetingNotes ? (
           <NextActionChecklist actions={playbook.nextActions} onToggle={onToggleAction} />
@@ -165,6 +425,7 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
         )
       )}
 
+      {/* Timeline */}
       {activeTab === "Timeline" && (
         <div className="flex flex-col">
           {playbook.timeline.map((item, i) => (
@@ -172,7 +433,6 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
           ))}
         </div>
       )}
-
     </div>
   );
 }
