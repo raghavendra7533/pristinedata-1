@@ -98,7 +98,7 @@ export default function SIPlaybook() {
             </button>
             <Icon icon="solar:alt-arrow-right-linear" className="w-3 h-3" />
             <button
-              onClick={() => navigate(`/si/account/${account?.id}`)}
+              onClick={() => navigate(`/si/accounts/${account?.id}`)}
               className="hover:text-[--si-text-secondary] transition-colors"
             >
               {playbook.accountName}
