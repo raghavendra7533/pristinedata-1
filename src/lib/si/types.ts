@@ -70,10 +70,52 @@ export interface Stakeholder {
   lastActiveDaysAgo: number;
 }
 
+export interface PlaybookPlay {
+  id: string;
+  timeHorizon: "This week" | "This month" | "Before close";
+  title: string;
+  subtitle: string;
+  assignee?: string;
+  actionLabels: string[];
+}
+
+export interface DealRisk {
+  category: string;
+  risk: string;
+  impact: "High" | "Medium" | "Low";
+  probability: "High" | "Medium" | "Low";
+  owner: string;
+  mitigation: string;
+}
+
+export interface Objection {
+  tag: string;
+  text: string;
+  documentLabel?: string;
+}
+
+export interface PlaybookVersion {
+  version: number;
+  generatedAt: string;
+  sourceMeeting?: string;
+}
+
 export interface PlaybookData {
   accountId: string;
   accountName: string;
   thesis: string;
+  summary?: string[];
+  successCriteria?: string[];
+  plays?: PlaybookPlay[];
+  dealObjective?: string[];
+  dealRisks?: DealRisk[];
+  overallRisk?: "High" | "Medium" | "Low";
+  objections?: Objection[];
+  versions?: PlaybookVersion[];
+  dealValue?: string;
+  dealStage?: string;
+  version?: number;
+  sourceMeeting?: string;
   fitHypotheses: Array<{ text: string; priority: "High" | "Med" | "Low" }>;
   landmines: Array<{ text: string; category: string }>;
   talkingPoints: Array<{ text: string }>;
@@ -82,6 +124,51 @@ export interface PlaybookData {
   timeline: Array<{ date: string; event: string; type: "meeting" | "email" | "system" }>;
   stakeholders: Stakeholder[];
   generatedAt: string;
+}
+
+export interface AccountMeeting {
+  id: string;
+  date: string;
+  durationMin: number;
+  meetingType: string;
+  title: string;
+  attendees: string;
+  tags: Array<{ label: string; color: "indigo" | "green" | "amber" | "rose" | "gray" }>;
+  summary: string;
+}
+
+export interface DealSnapshot {
+  health: "On track" | "At risk" | "Blocked";
+  amount: string;
+  stageProbability: string;
+  nextMilestone: string;
+  meetingsLogged: number;
+  meetingsPeriod: string;
+  team: string;
+  pathLabel?: string;
+}
+
+export interface MutualActionItem {
+  id: string;
+  text: string;
+  assignee: string;
+  status: "done" | "due" | "target";
+  dateLabel: string;
+}
+
+export interface AccountDetails {
+  accountId: string;
+  dealStage?: string;
+  dealValue?: string;
+  targetCloseDate?: string;
+  champion?: string;
+  playbookVersion?: number;
+  updatedLabel?: string;
+  accountSummaryWithMeetings?: string;
+  accountSummaryWithoutMeetings?: string;
+  meetings: AccountMeeting[];
+  dealSnapshot?: DealSnapshot;
+  mutualActionPlan?: MutualActionItem[];
 }
 
 export interface PlaybookListItem {
