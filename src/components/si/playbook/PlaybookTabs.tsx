@@ -323,7 +323,7 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
                             className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold"
                             style={
                               risk.impact === "High"
-                                ? { backgroundColor: "#DCFCE7", color: "#15803D" }
+                                ? { backgroundColor: "#FEE2E2", color: "#DC2626" }
                                 : risk.impact === "Medium"
                                 ? { backgroundColor: "#FEF3C7", color: "#D97706" }
                                 : { backgroundColor: "#F3F4F6", color: "#6B7280" }
@@ -337,7 +337,7 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
                             className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold"
                             style={
                               risk.probability === "High"
-                                ? { backgroundColor: "#DCFCE7", color: "#15803D" }
+                                ? { backgroundColor: "#FEE2E2", color: "#DC2626" }
                                 : risk.probability === "Medium"
                                 ? { backgroundColor: "#FEF3C7", color: "#D97706" }
                                 : { backgroundColor: "#F3F4F6", color: "#6B7280" }

@@ -396,7 +396,7 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
     dealStage: "Proposal",
     sourceMeeting: "Technical deep dive · Jun 21",
     thesis:
-      "Lattice is evaluating modern sales co-pilot tooling because their new VP of Sales Engineering is leading a GTM tooling refresh within their first 90 days. Internal sentiment is that existing account planning artifacts in SFDC are stale by the time sellers walk into a call.\n\nThis deal ties to two business initiatives: a sales-eng productivity push and a broader AE ramp-time program owned by the CRO. The pilot scope sits cleanly under the VP SE's mandate, which keeps the decision local and fast for v1.\n\nThis is winnable because we have an active champion in Sarah Kim, a concrete pilot scope, and a budget window that aligns with Q3. The main thing to defend is timing — competing Salesforce work could pull attention if we slip past July.",
+      "Salesloft is evaluating modern sales co-pilot tooling because their new VP of Sales Engineering is leading a GTM tooling refresh within their first 90 days. Internal sentiment is that existing account planning artifacts in SFDC are stale by the time sellers walk into a call.\n\nThis deal ties to two business initiatives: a sales-eng productivity push and a broader AE ramp-time program owned by the CRO. The pilot scope sits cleanly under the VP SE's mandate, which keeps the decision local and fast for v1.\n\nThis is winnable because we have an active champion in Sarah Kim, a concrete pilot scope, and a budget window that aligns with Q3. The main thing to defend is timing — competing Salesforce work could pull attention if we slip past July.",
     summary: [
       "Salesloft is evaluating a modern sales co-pilot to land a 12-seat pilot in sales engineering, with a path to a 60-seat AE rollout by Q4.",
       "Champion Sarah Kim (Director, Sales Eng) is actively socializing internally; new VP of SE joining in 30 days is the tailwind.",
@@ -544,8 +544,26 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-lattice": {
     accountId: "acc-lattice",
     accountName: "Lattice",
+    version: 1,
     thesis:
       "Lattice just closed a $50M Series D and hired a new VP of Sales Engineering from Snowflake. New leaders with fresh budget consistently rebuild their pre-sales and GTM stack within 90 days. The timing is ideal to lead with a technical value story backed by their Snowflake-native workflow.",
+    summary: [
+      "New $50M Series D and VP of SE hire from Snowflake — strong tailwind for a tech-forward co-pilot pitch.",
+      "Marcus Chen (VP SE, ex-Snowflake) is the likely champion; he'll want to put his stamp on the pre-sales stack within 60 days of joining.",
+      "No existing relationship yet — first outreach needs to be warm, Snowflake-native, and timed to his ramp window.",
+      "Series D budget is unlocked but CFO sign-off is required for new enterprise tools; keep pilot scope under VP SE mandate.",
+    ],
+    successCriteria: [
+      "Discovery call booked with Marcus Chen within 14 days of outreach.",
+      "Pilot scoped and agreed within 60 days of first call.",
+      "Expansion to AE org signed off by CRO before Q4 planning.",
+    ],
+    plays: [
+      { id: "lp1", timeHorizon: "This week", title: "Send personalized intro to Marcus Chen", subtitle: "Reference Snowflake background — warm the relationship before the ask.", assignee: "AE", actionLabels: ["Email sequence", "Sync to account plan"] },
+      { id: "lp2", timeHorizon: "This week", title: "Prepare Lattice-specific one-pager", subtitle: "Series D + Snowflake angle; keep it under 1 page.", assignee: "SE", actionLabels: ["Asset", "Sync to account plan"] },
+      { id: "lp3", timeHorizon: "This month", title: "Book discovery call with Marcus", subtitle: "Qualify pilot scope and SE team pain before any demo.", assignee: "AE", actionLabels: ["Call", "Sync to account plan"] },
+      { id: "lp4", timeHorizon: "Before close", title: "Present pilot success metrics to Sarah Goldstein (CRO)", subtitle: "Lock expansion narrative before Q4 budget cycle.", assignee: "Ashok", actionLabels: ["Exec intro", "Sync to account plan"] },
+    ],
     fitHypotheses: [
       { text: "Their new VP of SE will want a modern demo and POC workflow within 60 days of joining", priority: "High" },
       { text: "Series D budget will unlock enterprise tooling decisions that were blocked before", priority: "High" },
@@ -600,8 +618,25 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-qualified": {
     accountId: "acc-qualified",
     accountName: "Qualified",
+    version: 1,
     thesis:
       "Qualified brought in a new CRO from Salesforce and simultaneously raised $95M in growth equity. The combination of fresh executive leadership and significant capital creates a perfect storm for vendor re-evaluation. Lead with pipeline efficiency and Salesforce ecosystem fit.",
+    summary: [
+      "New CRO James Whitfield (ex-Salesforce) + $95M growth equity creates a prime re-evaluation window for the full GTM stack.",
+      "Anika Sharma (VP RevOps) is a warm champion — pipeline efficiency messaging resonated in initial outreach.",
+      "James hasn't joined a live call yet; champion-led intro is the next critical unlock before the 90-day window closes.",
+      "Internal political dynamics post-funding are a timing risk — procurement could take 30-60 extra days once started.",
+    ],
+    successCriteria: [
+      "CRO intro call booked via Anika within 30 days.",
+      "Pilot scoped and tied to pipeline efficiency metrics the CRO owns.",
+      "ROI case signed off before end of Q3 budget window.",
+    ],
+    plays: [
+      { id: "qp1", timeHorizon: "This week", title: "Send exec-level outreach referencing Pipeline Cloud expansion", subtitle: "Position as complementary, not competitive.", assignee: "AE", actionLabels: ["Email sequence", "Sync to account plan"] },
+      { id: "qp2", timeHorizon: "This month", title: "Champion-led intro to James Whitfield (CRO)", subtitle: "Validate budget and expansion path before committing to a full pilot.", assignee: "Champion", actionLabels: ["Exec intro", "Sync to account plan"] },
+      { id: "qp3", timeHorizon: "Before close", title: "Mutual close plan review with Anika", subtitle: "Lock procurement milestones and align on Q3 deadline.", assignee: "Ashok", actionLabels: ["Call", "Sync to account plan"] },
+    ],
     fitHypotheses: [
       { text: "Salesforce-background CRO will gravitate toward tools with deep Salesforce integration", priority: "High" },
       { text: "Growth equity mandate means they need to show ROI metrics fast — we can help instrumentalize that", priority: "High" },
@@ -657,8 +692,26 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-clari": {
     accountId: "acc-clari",
     accountName: "Clari",
+    version: 1,
     thesis:
       "Clari raised a $225M Series F and immediately posted 22 RevOps and data engineering roles. This level of data team hiring at scale indicates they are building or rebuilding internal data infrastructure — creating an ideal entry point for a platform conversation at the infrastructure layer.",
+    summary: [
+      "$225M Series F and 22 new data roles signal a major infrastructure build-out — ideal moment for a platform conversation.",
+      "Kevin Torres (VP Data Engineering) is a warm contact who understands the build-vs-buy tradeoff at scale.",
+      "No economic buyer engagement yet — Rachel Kim (CFO) hasn't been briefed; ROI case needs to be airtight before intro.",
+      "At $1.6B valuation, procurement will be formal — expect 90+ day cycle once Kevin commits.",
+    ],
+    successCriteria: [
+      "Build-vs-buy ROI presentation delivered to Kevin's team within 2 weeks.",
+      "CFO (Rachel Kim) briefed by end of quarter.",
+      "90-day proof-of-value scoped and agreed before Series F hiring wave peaks.",
+    ],
+    plays: [
+      { id: "cp1", timeHorizon: "This week", title: "Build Clari-specific ROI model (build vs. buy)", subtitle: "At their scale, the make-vs-buy case is the opening frame.", assignee: "SE", actionLabels: ["Asset", "Sync to account plan"] },
+      { id: "cp2", timeHorizon: "This week", title: "Identify hiring manager for data infrastructure roles", subtitle: "Second champion path if Kevin's bandwidth is stretched.", assignee: "AE", actionLabels: ["Research", "Sync to account plan"] },
+      { id: "cp3", timeHorizon: "This month", title: "Champion-led warm intro to Rachel Kim (CFO)", subtitle: "Get economic buyer in the loop before formal procurement starts.", assignee: "Champion", actionLabels: ["Exec intro", "Sync to account plan"] },
+      { id: "cp4", timeHorizon: "Before close", title: "Formal proposal with enterprise contract terms", subtitle: "Match their procurement formality — legal and security review prep.", assignee: "Ashok", actionLabels: ["Proposal", "Sync to account plan"] },
+    ],
     fitHypotheses: [
       { text: "Massive data hiring wave means they need tooling that scales with a growing data org", priority: "High" },
       { text: "Series F capital creates multi-year budget certainty — enterprise contract terms are in play", priority: "High" },
