@@ -381,29 +381,78 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
 
       {/* Call Prep */}
       {activeTab === "Call Prep" && (
-        <div className="flex flex-col gap-3">
-          {playbook.discoveryQuestions.map((q, i) => (
-            <div
-              key={i}
-              className="rounded-[12px] border border-[--si-card-border] bg-[--si-card-bg] p-4 flex flex-col gap-2"
-            >
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: "#E0E7FF", color: "#3730A3" }}
-                >
-                  {q.actionLabel}
-                </span>
-                <span
-                  className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}
-                >
-                  {q.category}
-                </span>
-              </div>
-              <p className="text-sm text-[--si-text-primary] leading-snug">{q.text}</p>
+        <div className="flex gap-8 items-start">
+
+          {/* Left: Discovery questions */}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-semibold text-[--si-text-primary] mb-4">Discovery questions</h2>
+            {(() => {
+              const grouped = playbook.discoveryQuestions.reduce<Record<string, typeof playbook.discoveryQuestions>>((acc, q) => {
+                if (!acc[q.category]) acc[q.category] = [];
+                acc[q.category].push(q);
+                return acc;
+              }, {});
+              return Object.entries(grouped).map(([category, questions]) => (
+                <div key={category} className="mb-5">
+                  <p className="text-[10px] font-semibold tracking-widest text-[--si-text-muted] uppercase mb-2">
+                    {category}
+                  </p>
+                  <ul className="flex flex-col gap-2">
+                    {questions.map((q, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[--si-text-muted] flex-shrink-0" />
+                        <p className="text-sm text-[--si-text-secondary] leading-relaxed">{q.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ));
+            })()}
+          </div>
+
+          {/* Right: Talking points + Objection handling */}
+          <div className="w-[360px] flex-shrink-0 flex flex-col gap-6">
+
+            {/* Talking points */}
+            <div>
+              <h2 className="text-sm font-semibold text-[--si-text-primary] mb-4">Talking points</h2>
+              <ul className="flex flex-col gap-3">
+                {playbook.talkingPoints.map((tp, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[--si-text-muted] flex-shrink-0" />
+                    <p className="text-sm text-[--si-text-secondary] leading-relaxed">{tp.text}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+
+            {/* Objection handling */}
+            {playbook.objections && playbook.objections.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-[--si-text-primary] mb-4">Objection handling</h2>
+                <div className="flex flex-col gap-4">
+                  {playbook.objections.map((obj, i) => (
+                    <div key={i} className="flex flex-col gap-2">
+                      <span
+                        className="self-start px-3 py-1 rounded-full text-[11px] font-semibold border"
+                        style={{ borderColor: "#D97706", color: "#D97706", backgroundColor: "transparent" }}
+                      >
+                        {obj.tag}
+                      </span>
+                      <p className="text-sm text-[--si-text-secondary] leading-relaxed">{obj.text}</p>
+                      {obj.documentLabel && (
+                        <div className="flex items-center gap-1.5 text-xs text-[--si-text-muted]">
+                          <Icon icon="solar:document-linear" className="w-3.5 h-3.5" />
+                          <span>{obj.documentLabel}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
       )}
 
