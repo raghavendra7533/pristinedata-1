@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import type { PlaybookData, PlaybookPlay } from "@/lib/si/types";
+import type { PlaybookData, PlaybookPlay, PlaybookVersion } from "@/lib/si/types";
 import { NextActionChecklist } from "./NextActionChecklist";
 import { TimelineItem } from "./TimelineItem";
 
@@ -10,9 +10,10 @@ interface PlaybookTabsProps {
   onToggleAction: (id: string) => void;
   hasMeetingNotes?: boolean;
   activeTabOverride?: Tab;
+  versions?: PlaybookVersion[];
 }
 
-const TABS = ["Overview", "Strategy", "Call Prep", "Next Actions", "Timeline"] as const;
+const TABS = ["Overview", "Strategy", "Call Prep", "Next Actions", "Timeline", "Versions"] as const;
 type Tab = (typeof TABS)[number];
 
 const PRIORITY_STYLES: Record<"High" | "Med" | "Low", { bg: string; text: string }> = {
@@ -29,7 +30,7 @@ const HORIZON_ICONS: Record<PlaybookPlay["timeHorizon"], string> = {
   "Before close": "solar:flag-linear",
 };
 
-export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false, activeTabOverride }: PlaybookTabsProps) {
+export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false, activeTabOverride, versions }: PlaybookTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
 
   useEffect(() => {
@@ -480,6 +481,60 @@ export function PlaybookTabs({ playbook, onToggleAction, hasMeetingNotes = false
           {playbook.timeline.map((item, i) => (
             <TimelineItem key={i} item={item} isLast={i === playbook.timeline.length - 1} />
           ))}
+        </div>
+      )}
+
+      {/* Versions */}
+      {activeTab === "Versions" && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-[--si-text-muted]">
+              Each time you regenerate the playbook, a new version is saved here.
+            </p>
+          </div>
+          {(versions ?? playbook.versions ?? []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <Icon icon="solar:layers-minimalistic-linear" className="w-8 h-8 text-[--si-text-muted]" />
+              <p className="text-sm text-[--si-text-secondary]">No versions yet. Generate the playbook to create one.</p>
+            </div>
+          ) : (
+            <div
+              className="rounded-[14px] overflow-hidden"
+              style={{ border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}
+            >
+              {(versions ?? playbook.versions ?? []).slice().reverse().map((v, i, arr) => {
+                const isCurrent = v.version === playbook.version || i === 0;
+                return (
+                  <div
+                    key={v.version}
+                    className="px-5 py-3.5 flex items-center justify-between gap-4"
+                    style={i < arr.length - 1 ? { borderBottom: "1px solid var(--si-card-border)" } : {}}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <Icon icon="solar:layers-minimalistic-linear" className="w-4 h-4 text-[--si-text-muted]" />
+                        <span className="text-sm font-semibold text-[--si-text-primary]">v{v.version}</span>
+                      </div>
+                      {isCurrent && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                          Current
+                        </span>
+                      )}
+                      {v.sourceMeeting && (
+                        <span className="flex items-center gap-1 text-xs text-[--si-text-muted]">
+                          <Icon icon="solar:calendar-linear" className="w-3 h-3" />
+                          {v.sourceMeeting}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-[--si-text-muted] flex-shrink-0">
+                      {new Date(v.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
