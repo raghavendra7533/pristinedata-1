@@ -493,7 +493,12 @@ export default function SIDashboard() {
                     }}
                   >
                     <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--si-text-secondary)", flex: 1 }}>
-                      <span style={{ ...displayFont, fontWeight: 700, color: "var(--si-text-primary)" }}>{acct.name}</span>
+                      <button
+                        onClick={() => navigate(`/si/accounts/${acct.id}`)}
+                        style={{ ...displayFont, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+                      >{acct.name}</button>
                       {" — "}
                       {acct.context}
                     </p>
@@ -645,9 +650,14 @@ export default function SIDashboard() {
                         <AccountInitialBadge name={account.accountName} domain={account.domain} size={34} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ ...displayFont, fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)" }}>
+                            <button
+                              onClick={() => navigate(`/si/accounts/${account.id}`)}
+                              style={{ ...displayFont, fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+                            >
                               {account.accountName}
-                            </span>
+                            </button>
                             <span style={{ fontSize: 11, color: "var(--si-text-muted)" }}>{account.domain}</span>
                             <span
                               style={{
@@ -733,7 +743,13 @@ export default function SIDashboard() {
               </span>
             </div>
             <p style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
-              {bestCallAccount.name} —{" "}
+              <button
+                onClick={() => navigate(`/si/accounts/${bestCallAccount.id}`)}
+                style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer", letterSpacing: "-0.02em" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+              >{bestCallAccount.name}</button>
+              {" — "}
               <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>{bestCallAccount.contact}</span>
             </p>
             <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)", marginTop: 8 }}>

@@ -28,7 +28,7 @@ export function TopAccountsPanel() {
             <div
               key={account.id}
               className="flex items-center justify-between py-1.5 cursor-pointer group"
-              onClick={() => navigate(`/si/playbook/${account.id}`)}
+              onClick={() => navigate(`/si/accounts/${account.id}`)}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">

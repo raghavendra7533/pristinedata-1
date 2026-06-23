@@ -129,7 +129,7 @@ export default function AccountResultsTable({ accounts, onAddToWatchlist }: Acco
                   <td className="px-4 py-3">
                     <button
                       type="button"
-                      onClick={() => navigate(`/si/playbook/${account.id}`)}
+                      onClick={() => navigate(`/si/accounts/${account.id}`)}
                       className="text-left group"
                     >
                       <div className="font-medium text-[--si-text-primary] group-hover:text-[--si-primary] transition-colors">{account.companyName}</div>
