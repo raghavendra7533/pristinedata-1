@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type FilterProperty = "signal" | "playbook" | "time_range";
+type FilterProperty = "signal" | "playbook" | "time_range" | "status";
 
 interface ActiveFilter {
   id: string;
@@ -15,6 +15,7 @@ export interface ComputedFilters {
   signalFilter: string;
   playbookFilter: "all" | "has_playbook" | "no_playbook";
   timeRange: "24h" | "7d" | "30d";
+  statusFilter: "all" | "Active" | "Acting Now" | "Going Cold" | "Closing";
 }
 
 export interface WatchlistFilterBarProps {
@@ -29,6 +30,7 @@ const PROPERTIES: Array<{ key: FilterProperty; label: string; icon: string }> = 
   { key: "signal",     label: "Signal Type", icon: "solar:bell-bing-linear" },
   { key: "playbook",   label: "Playbook",    icon: "solar:notebook-bookmark-linear" },
   { key: "time_range", label: "Time Range",  icon: "solar:clock-circle-linear" },
+  { key: "status",     label: "Status",      icon: "solar:pulse-linear" },
 ];
 
 const VALUES: Record<FilterProperty, Array<{ key: string; label: string }>> = {
@@ -48,12 +50,19 @@ const VALUES: Record<FilterProperty, Array<{ key: string; label: string }>> = {
     { key: "7d",  label: "Last 7 days" },
     { key: "30d", label: "Last 30 days" },
   ],
+  status: [
+    { key: "Active",      label: "Active" },
+    { key: "Acting Now",  label: "Acting Now" },
+    { key: "Going Cold",  label: "Going Cold" },
+    { key: "Closing",     label: "Closing" },
+  ],
 };
 
 const PROP_LABEL: Record<FilterProperty, string> = {
   signal:     "Signal",
   playbook:   "Playbook",
   time_range: "Time",
+  status:     "Status",
 };
 
 // ── Compute filters from active pill state ────────────────────────────────────
@@ -62,10 +71,12 @@ function compute(filters: ActiveFilter[]): ComputedFilters {
   const signal     = filters.find((f) => f.property === "signal");
   const playbook   = filters.find((f) => f.property === "playbook");
   const time_range = filters.find((f) => f.property === "time_range");
+  const status     = filters.find((f) => f.property === "status");
   return {
     signalFilter:   signal     ? signal.value     : "all",
     playbookFilter: playbook   ? (playbook.value as ComputedFilters["playbookFilter"]) : "all",
     timeRange:      time_range ? (time_range.value as ComputedFilters["timeRange"])    : "7d",
+    statusFilter:   status     ? (status.value as ComputedFilters["statusFilter"])     : "all",
   };
 }
 

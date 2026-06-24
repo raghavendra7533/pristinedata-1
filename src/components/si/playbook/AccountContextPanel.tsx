@@ -9,6 +9,7 @@ interface AccountContextPanelProps {
   account: WatchlistAccount;
   stakeholders: Stakeholder[];
   onAddStakeholder: () => void;
+  hideIdentity?: boolean;
 }
 
 function SignalRow({ signal }: { signal: { id: string; type: string; summary: string } }) {
@@ -41,42 +42,44 @@ function SignalRow({ signal }: { signal: { id: string; type: string; summary: st
   );
 }
 
-export function AccountContextPanel({ account, stakeholders, onAddStakeholder }: AccountContextPanelProps) {
+export function AccountContextPanel({ account, stakeholders, onAddStakeholder, hideIdentity = false }: AccountContextPanelProps) {
   const [imgError, setImgError] = useState(false);
   const recentSignals = account.signals.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Account name + favicon */}
-      <div className="flex items-center gap-2.5">
-        {!imgError ? (
-          <img
-            src={`https://www.google.com/s2/favicons?sz=32&domain=${account.domain}`}
-            alt={account.accountName}
-            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-indigo-500">
-            {account.accountName.charAt(0)}
+      {!hideIdentity && (
+        <>
+          {/* Account name + favicon */}
+          <div className="flex items-center gap-2.5">
+            {!imgError ? (
+              <img
+                src={`https://www.google.com/s2/favicons?sz=32&domain=${account.domain}`}
+                alt={account.accountName}
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-indigo-500">
+                {account.accountName.charAt(0)}
+              </div>
+            )}
+            <h2 className="text-lg font-semibold text-[--si-text-primary] leading-tight">{account.accountName}</h2>
           </div>
-        )}
-        <h2 className="text-lg font-semibold text-[--si-text-primary] leading-tight">{account.accountName}</h2>
-      </div>
 
-      {/* Firmographic row */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1">
-        {[account.revenue, account.employees, account.industry, account.location].map((item, i) => (
-          <span key={i} className="text-xs text-[--si-text-muted]">
-            {item}
-          </span>
-        ))}
-      </div>
+          {/* Firmographic row */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {[account.revenue, account.employees, account.industry, account.location].map((item, i) => (
+              <span key={i} className="text-xs text-[--si-text-muted]">{item}</span>
+            ))}
+          </div>
 
-      {/* Intent score */}
-      <div>
-        <IntentScoreBadge score={account.intentScore} label={account.intentLabel} />
-      </div>
+          {/* Intent score */}
+          <div>
+            <IntentScoreBadge score={account.intentScore} label={account.intentLabel} />
+          </div>
+        </>
+      )}
 
       {/* Recent Signals */}
       <div>

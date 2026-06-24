@@ -100,9 +100,12 @@ export interface PlaybookVersion {
   sourceMeeting?: string;
 }
 
+export type PlaybookStatus = "Active" | "Acting Now" | "Going Cold" | "Closing";
+
 export interface PlaybookData {
   accountId: string;
   accountName: string;
+  status?: PlaybookStatus;
   thesis: string;
   summary?: string[];
   successCriteria?: string[];

@@ -391,6 +391,7 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-salesloft": {
     accountId: "acc-salesloft",
     accountName: "Salesloft",
+    status: "Acting Now",
     version: 4,
     dealValue: "$240K",
     dealStage: "Proposal",
@@ -544,6 +545,7 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-lattice": {
     accountId: "acc-lattice",
     accountName: "Lattice",
+    status: "Active",
     version: 1,
     thesis:
       "Lattice just closed a $50M Series D and hired a new VP of Sales Engineering from Snowflake. New leaders with fresh budget consistently rebuild their pre-sales and GTM stack within 90 days. The timing is ideal to lead with a technical value story backed by their Snowflake-native workflow.",
@@ -618,6 +620,7 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-qualified": {
     accountId: "acc-qualified",
     accountName: "Qualified",
+    status: "Going Cold",
     version: 1,
     thesis:
       "Qualified brought in a new CRO from Salesforce and simultaneously raised $95M in growth equity. The combination of fresh executive leadership and significant capital creates a perfect storm for vendor re-evaluation. Lead with pipeline efficiency and Salesforce ecosystem fit.",
@@ -692,6 +695,7 @@ export const MOCK_PLAYBOOKS: Record<string, PlaybookData> = {
   "acc-clari": {
     accountId: "acc-clari",
     accountName: "Clari",
+    status: "Closing",
     version: 1,
     thesis:
       "Clari raised a $225M Series F and immediately posted 22 RevOps and data engineering roles. This level of data team hiring at scale indicates they are building or rebuilding internal data infrastructure — creating an ideal entry point for a platform conversation at the infrastructure layer.",

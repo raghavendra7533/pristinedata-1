@@ -53,6 +53,7 @@ export default function SIWatchlist() {
     signalFilter: "all",
     playbookFilter: "all",
     timeRange: "7d",
+    statusFilter: "all",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,7 +65,7 @@ export default function SIWatchlist() {
     [watchedAccounts]
   );
 
-  const { signalFilter, playbookFilter, timeRange } = computedFilters;
+  const { signalFilter, playbookFilter, timeRange, statusFilter } = computedFilters;
 
   const filteredAccounts = useMemo(() => {
     const cutoff = new Date("2026-05-17T00:00:00.000Z");
@@ -84,6 +85,11 @@ export default function SIWatchlist() {
 
       if (playbookFilter === "has_playbook" && !MOCK_PLAYBOOKS[account.id]) return false;
       if (playbookFilter === "no_playbook" && MOCK_PLAYBOOKS[account.id]) return false;
+
+      if (statusFilter !== "all") {
+        const playbook = MOCK_PLAYBOOKS[account.id];
+        if (!playbook || playbook.status !== statusFilter) return false;
+      }
 
       const hasRecentSignal = account.signals.some((s) => new Date(s.detectedAt) >= cutoff);
       if (!hasRecentSignal) return false;
