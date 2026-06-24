@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useToast } from "@/hooks/use-toast";
 import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS } from "@/lib/si/mockData";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 import { WatchlistFilterBar } from "@/components/si/watchlist/WatchlistFilterBar";
@@ -45,7 +44,6 @@ function dedupeById(accounts: WatchlistAccount[]): WatchlistAccount[] {
 
 export default function SIWatchlist() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { watchedAccounts, addWatchedAccount, profile } = useUserProfileStore();
 
   const [activeTab, setActiveTab] = useState<"accounts" | "contacts">("accounts");
@@ -320,7 +318,6 @@ export default function SIWatchlist() {
                     hasPlaybook={hasPlaybook}
                     onViewAccount={() => navigate(`/si/accounts/${account.id}`)}
                     onViewPlaybook={() => navigate(`/si/playbook/${account.id}`)}
-                    onAddNote={() => toast({ title: "Note added.", description: `Logged a note for ${account.accountName}.` })}
                     onRemove={() => handleRemove(account.id)}
                   />
                 );

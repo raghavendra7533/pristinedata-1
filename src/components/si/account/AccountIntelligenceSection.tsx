@@ -5,18 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
 import type { PlaybookData } from "@/lib/si/types";
 
-const MARKET_TRENDS = [
-  { tag: "Hiring", text: "Increased hiring for RevOps roles in SaaS — past 30 days." },
-  { tag: "Funding", text: "Category-wide Series C+ funding up 22% quarter-over-quarter." },
-  { tag: "Tech Stack", text: "Shift toward consolidated GTM tooling among mid-market accounts." },
-];
-
-const COMPETITOR_ACTIVITY = [
-  { tag: "Pricing", text: "Competitor X launched a new pricing tier targeting mid-market teams." },
-  { tag: "Product", text: "Competitor Y shipped a native intent-data integration." },
-  { tag: "Funding", text: "Competitor Z raised a Series D to expand its partner ecosystem." },
-];
-
 const PRIORITY_COLOR: Record<string, string> = {
   High: "#10B981",
   Med: "#F59E0B",
@@ -182,37 +170,50 @@ export function AccountIntelligenceSection({ playbook }: Props) {
             </>
           )}
 
-          {/* ── Market / category intel (always shown for Pro) ── */}
+          {/* ── Recent News ── */}
           <div>
-            <SectionLabel>Market Trends</SectionLabel>
-            <div className="flex flex-col gap-2">
-              {MARKET_TRENDS.map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="mt-[3px] shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
-                    {item.tag}
-                  </span>
-                  <p className="text-[13px] leading-snug" style={{ color: "var(--si-text-secondary)" }}>
-                    {item.text}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <SectionLabel>Recent News</SectionLabel>
+            {playbook?.recentNews?.length ? (
+              <div className="flex flex-col gap-2">
+                {playbook.recentNews.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className="mt-[3px] shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
+                      {item.tag}
+                    </span>
+                    <p className="text-[13px] leading-snug" style={{ color: "var(--si-text-secondary)" }}>
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px]" style={{ color: "var(--si-text-muted)" }}>
+                No recent news signals captured yet.
+              </p>
+            )}
           </div>
 
+          {/* ── Competitor Activity ── */}
           <div>
             <SectionLabel>Competitor Activity</SectionLabel>
-            <div className="flex flex-col gap-2">
-              {COMPETITOR_ACTIVITY.map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="mt-[3px] shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600">
-                    {item.tag}
-                  </span>
-                  <p className="text-[13px] leading-snug" style={{ color: "var(--si-text-secondary)" }}>
-                    {item.text}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {playbook?.competitorActivity?.length ? (
+              <div className="flex flex-col gap-2">
+                {playbook.competitorActivity.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className="mt-[3px] shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600">
+                      {item.tag}
+                    </span>
+                    <p className="text-[13px] leading-snug" style={{ color: "var(--si-text-secondary)" }}>
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px]" style={{ color: "var(--si-text-muted)" }}>
+                No competitor activity signals yet.
+              </p>
+            )}
           </div>
 
           <button

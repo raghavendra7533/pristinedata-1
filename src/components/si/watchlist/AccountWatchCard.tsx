@@ -1,15 +1,12 @@
-import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { SIGNAL_TYPES } from "@/lib/si/constants";
 import type { WatchlistAccount } from "@/lib/si/types";
-import { MessageDraftModal } from "./MessageDraftModal";
 
 interface AccountWatchCardProps {
   account: WatchlistAccount;
   hasPlaybook?: boolean;
   onViewAccount: () => void;
   onViewPlaybook: () => void;
-  onAddNote: () => void;
   onRemove: () => void;
 }
 
@@ -30,11 +27,8 @@ export function AccountWatchCard({
   hasPlaybook = false,
   onViewAccount,
   onViewPlaybook,
-  onAddNote,
   onRemove,
 }: AccountWatchCardProps) {
-  const [showMessage, setShowMessage] = useState(false);
-
   const recentSignals = [...account.signals]
     .sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime())
     .slice(0, 3);
@@ -43,7 +37,6 @@ export function AccountWatchCard({
     recentSignals.length > 0 ? SIGNAL_TYPES[recentSignals[0].type]?.color : "#E5E7EB";
 
 return (
-    <>
       <div
         className="rounded-[12px] flex flex-col"
         style={{
@@ -147,17 +140,6 @@ return (
           className="flex items-center border-t px-3 py-0"
           style={{ borderColor: "var(--si-card-border)" }}
         >
-          {/* Primary */}
-          <button
-            onClick={() => setShowMessage(true)}
-            className="flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-          >
-            <Icon icon="solar:pen-new-square-linear" className="w-4 h-4" />
-            Message
-          </button>
-
-          <div className="w-px h-4 bg-gray-200 mx-1" />
-
           <button
             onClick={onViewAccount}
             className="flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -176,16 +158,6 @@ return (
             {hasPlaybook ? "View Playbook" : "Generate Playbook"}
           </button>
 
-          <div className="w-px h-4 bg-gray-200 mx-1" />
-
-          <button
-            onClick={onAddNote}
-            className="flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Icon icon="solar:document-add-linear" className="w-4 h-4" />
-            Add Note
-          </button>
-
           {/* Spacer */}
           <div className="flex-1" />
 
@@ -199,10 +171,5 @@ return (
         </div>
 
       </div>
-
-      {showMessage && (
-        <MessageDraftModal account={account} onClose={() => setShowMessage(false)} />
-      )}
-    </>
   );
 }

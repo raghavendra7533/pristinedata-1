@@ -127,6 +127,8 @@ export interface PlaybookData {
   timeline: Array<{ date: string; event: string; type: "meeting" | "email" | "system" }>;
   stakeholders: Stakeholder[];
   generatedAt: string;
+  recentNews?: Array<{ tag: string; text: string; date?: string }>;
+  competitorActivity?: Array<{ tag: string; text: string }>;
 }
 
 export interface AccountMeeting {
@@ -172,6 +174,18 @@ export interface AccountDetails {
   meetings: AccountMeeting[];
   dealSnapshot?: DealSnapshot;
   mutualActionPlan?: MutualActionItem[];
+  companyOverview?: string;
+  productOffering?: string;
+  icpSummary?: string;
+  strategicObjectives?: string[];
+  icpPersonas?: string[];
+  messagingThemes?: string[];
+  priorityTopics?: string[];
+  engagementHooks?: string[];
+  dataQualityNote?: string;
+  competitorOverview?: string;
+  competitors?: Array<{ name: string; description: string }>;
+  marketPosition?: string;
 }
 
 export interface PlaybookListItem {
