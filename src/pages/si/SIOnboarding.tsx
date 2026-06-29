@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
-import type { ICPConfig } from "@/lib/si/types";
+import type { ICPConfig, WatchlistAccount } from "@/lib/si/types";
+import { MOCK_WATCHLIST_ACCOUNTS } from "@/lib/si/mockData";
 import logoLight from "@/assets/Pristine Data AI Logo.svg";
 
 // ─── Role category helper ────────────────────────────────────────────────────
@@ -621,7 +622,7 @@ function Step2Discovery({ email, enriched, icp, onContinue }: Step2DiscoveryProp
       panelTagline="We started working before you signed up."
     >
       <div className="flex flex-col gap-5">
-        <OnboardingDots step={2} total={3} />
+        <OnboardingDots step={2} total={4} />
 
         {/* Status pill */}
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-xs font-medium text-[#166534] self-start">
@@ -921,13 +922,174 @@ function Step4Loading({ role, onDone }: Step4Props) {
   );
 }
 
+// ─── Step 4 — Watchlist Seeding ──────────────────────────────────────────────
+
+interface Step4WatchlistProps {
+  onFinish: (selected: WatchlistAccount[]) => void;
+  onSkip: () => void;
+}
+
+function Step4Watchlist({ onFinish, onSkip }: Step4WatchlistProps) {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<WatchlistAccount[]>([]);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = query.trim().length === 0
+    ? []
+    : MOCK_WATCHLIST_ACCOUNTS.filter((a) => {
+        const q = query.toLowerCase();
+        return (
+          !selected.some((s) => s.id === a.id) &&
+          (a.accountName.toLowerCase().includes(q) || a.domain.toLowerCase().includes(q))
+        );
+      }).slice(0, 6);
+
+  function select(account: WatchlistAccount) {
+    if (selected.length >= 3 || selected.some((s) => s.id === account.id)) return;
+    setSelected((prev) => [...prev, account]);
+    setQuery("");
+    setOpen(false);
+    inputRef.current?.focus();
+  }
+
+  function remove(id: string) {
+    setSelected((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  const panel = (
+    <div className="flex flex-col items-center gap-6 w-full max-w-[280px] text-center">
+      <h2 className="text-[2rem] font-bold text-white leading-tight">
+        Your pipeline<br />starts here.
+      </h2>
+      <p className="text-xs text-indigo-400">Pristine watches these accounts and surfaces buying moments the moment they happen.</p>
+      <div className="flex flex-col gap-3 w-full">
+        {["Hiring signals", "Funding rounds", "Leadership changes", "Tech stack shifts"].map((sig) => (
+          <div key={sig} className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-xl px-3 py-2.5">
+            <Icon icon="solar:bell-bing-bold" className="w-4 h-4 text-indigo-300 shrink-0" />
+            <span className="text-sm text-white text-left">{sig}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const mobileTop = (
+    <div className="w-full flex items-center justify-between px-6 py-4">
+      <img src={logoLight} alt="Pristine" className="h-6 w-auto" />
+      <OnboardingDots step={4} total={4} />
+    </div>
+  );
+
+  return (
+    <SplitLayout panel={panel} mobileTop={mobileTop} panelTagline="Track signals. Close faster.">
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1">
+          <OnboardingDots step={4} total={4} />
+          <h1 className="text-2xl font-semibold text-[#0F0F0F] mt-3">Add your first accounts to watch</h1>
+          <p className="text-sm text-[#6B7280]">We'll track signals and surface buying moments for these accounts.</p>
+        </div>
+
+        {/* Selected chips */}
+        {selected.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selected.map((acc) => (
+              <span
+                key={acc.id}
+                className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full bg-[#EEF2FF] border border-[#C7D2FE] text-xs font-medium text-[#4338CA]"
+              >
+                {acc.accountName}
+                <button
+                  type="button"
+                  onClick={() => remove(acc.id)}
+                  className="w-3.5 h-3.5 rounded-full bg-[#C7D2FE] hover:bg-[#A5B4FC] flex items-center justify-center transition-colors"
+                  aria-label={`Remove ${acc.accountName}`}
+                >
+                  <Icon icon="solar:close-circle-bold" className="w-3 h-3 text-[#4338CA]" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Search input */}
+        <div className="relative">
+          <div className="relative flex items-center">
+            <Icon icon="solar:magnifer-linear" className="absolute left-3 w-4 h-4 text-[#9CA3AF] pointer-events-none" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+              onFocus={() => setOpen(true)}
+              onBlur={() => setTimeout(() => setOpen(false), 150)}
+              placeholder={selected.length >= 3 ? "Max 3 accounts selected" : "Search by company name or domain…"}
+              disabled={selected.length >= 3}
+              className="w-full border border-[#E5E7EB] rounded-lg pl-9 pr-3 py-2.5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#6366F1] transition-colors disabled:bg-[#F9FAFB] disabled:cursor-not-allowed"
+            />
+          </div>
+
+          {/* Dropdown suggestions */}
+          {open && filtered.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-20 overflow-hidden">
+              {filtered.map((acc) => (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onMouseDown={() => select(acc)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F9FAFB] transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center overflow-hidden shrink-0">
+                    <img
+                      src={`https://logo.clearbit.com/${acc.domain}`}
+                      alt={acc.accountName}
+                      className="w-full h-full object-contain p-0.5"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#111827] truncate">{acc.accountName}</p>
+                    <p className="text-xs text-[#9CA3AF] truncate">{acc.domain}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <p className="text-xs text-[#9CA3AF] -mt-2">Select up to 3 accounts</p>
+
+        {/* CTAs */}
+        <div className="flex flex-col gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => onFinish(selected)}
+            disabled={selected.length === 0}
+            className="w-full rounded-full bg-[#6366F1] text-white px-6 py-3 text-sm font-semibold hover:bg-[#4F46E5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Add to watchlist &amp; finish
+          </button>
+          <button
+            type="button"
+            onClick={onSkip}
+            className="text-center text-sm text-[#6B7280] hover:text-[#374151] transition-colors"
+          >
+            Skip for now
+          </button>
+        </div>
+      </div>
+    </SplitLayout>
+  );
+}
+
 // ─── Root Component ───────────────────────────────────────────────────────────
 
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2 | 3 | 4;
 
 export default function SIOnboarding() {
   const navigate = useNavigate();
   const setProfile = useUserProfileStore((s) => s.setProfile);
+  const addWatchedAccount = useUserProfileStore((s) => s.addWatchedAccount);
 
   const [step, setStep] = useState<WizardStep>(1);
   const [email, setEmail] = useState("");
@@ -978,14 +1140,23 @@ export default function SIOnboarding() {
     setStep(3);
   }
 
-  function handleDone() {
+  function handleLoadingDone() {
     setProfile({ onboardingCompleted: true });
     const category = getRoleCategory(role);
     if (category === "sdr") {
       navigate("/si/icp");
     } else {
-      navigate("/si/watchlist");
+      setStep(4);
     }
+  }
+
+  function handleWatchlistFinish(selected: WatchlistAccount[]) {
+    selected.forEach((acc) => addWatchedAccount(acc));
+    navigate("/si/watchlist");
+  }
+
+  function handleWatchlistSkip() {
+    navigate("/si/watchlist");
   }
 
   if (step === 1) return <Step1Email onSubmit={handleStep1} />;
@@ -998,5 +1169,11 @@ export default function SIOnboarding() {
         onContinue={handleStep2Continue}
       />
     );
-  return <Step4Loading role={role} onDone={handleDone} />;
+  if (step === 3) return <Step4Loading role={role} onDone={handleLoadingDone} />;
+  return (
+    <Step4Watchlist
+      onFinish={handleWatchlistFinish}
+      onSkip={handleWatchlistSkip}
+    />
+  );
 }

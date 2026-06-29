@@ -5,6 +5,7 @@ import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS, MOCK_ACCOUNT_DETAILS } from "@
 import { AccountIntelligenceSection } from "@/components/si/account/AccountIntelligenceSection";
 import { SIGNAL_TYPES } from "@/lib/si/constants";
 import type { Stakeholder, AccountMeeting, MutualActionItem, SignalType } from "@/lib/si/types";
+import { AddStakeholderModal, ROLE_STYLES } from "@/components/si/shared/AddStakeholderModal";
 
 // ── style maps ────────────────────────────────────────────────────────────────
 
@@ -16,13 +17,6 @@ const TAG_STYLES: Record<string, string> = {
   gray:   "bg-gray-100 text-gray-600 border border-gray-200",
 };
 
-const ROLE_STYLES: Record<Stakeholder["role"], string> = {
-  Champion:         "bg-emerald-50 text-emerald-700 border border-emerald-100",
-  "Economic Buyer": "bg-indigo-50 text-indigo-700 border border-indigo-100",
-  Influencer:       "bg-gray-100 text-gray-600 border border-gray-200",
-  Blocker:          "bg-rose-50 text-rose-700 border border-rose-100",
-  Ops:              "bg-amber-50 text-amber-700 border border-amber-100",
-};
 
 const HEALTH_STYLES = {
   "On track": "bg-emerald-50 text-emerald-700",
@@ -160,6 +154,8 @@ export default function SIAccountView() {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("Account Overview");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [localStakeholders, setLocalStakeholders] = useState<Stakeholder[]>([]);
 
   const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === accountId);
   const playbook = accountId ? MOCK_PLAYBOOKS[accountId] : undefined;
@@ -173,12 +169,18 @@ export default function SIAccountView() {
     );
   }
 
-  const stakeholders = playbook?.stakeholders ?? [];
+  const stakeholders = [...(playbook?.stakeholders ?? []), ...localStakeholders];
   const hasMeetings = (details?.meetings ?? []).length > 0;
   const recentSignals = account.signals.slice(0, 5);
 
   return (
     <div className="flex h-screen" data-theme="si">
+      {showAddModal && (
+        <AddStakeholderModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={(s) => setLocalStakeholders((prev) => [...prev, s])}
+        />
+      )}
 
       {/* ── Left sidebar: identity + signals only ── */}
       <div
@@ -250,9 +252,18 @@ export default function SIAccountView() {
 
         {/* Contacts */}
         <div className="p-5 flex flex-col gap-2.5">
-          <p className="text-[10px] font-semibold text-[--si-text-muted] uppercase tracking-widest mb-0.5">
-            Contacts{stakeholders.length > 0 ? ` · ${stakeholders.length}` : ""}
-          </p>
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-[10px] font-semibold text-[--si-text-muted] uppercase tracking-widest">
+              Contacts{stakeholders.length > 0 ? ` · ${stakeholders.length}` : ""}
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-[--si-primary] hover:opacity-80 transition-opacity"
+            >
+              <Icon icon="solar:add-circle-linear" className="w-3.5 h-3.5" />
+              Add
+            </button>
+          </div>
           {stakeholders.length === 0 ? (
             <p className="text-xs text-[--si-text-muted]">No contacts added yet.</p>
           ) : (

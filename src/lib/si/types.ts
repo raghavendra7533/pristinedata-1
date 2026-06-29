@@ -19,6 +19,9 @@ export interface SignalEvent {
   source: string;
   seenAt: string | null;
   accountId: string;
+  signalLevel?: "account" | "contact";
+  contactName?: string;
+  contactTitle?: string;
 }
 
 export interface WatchlistAccount {

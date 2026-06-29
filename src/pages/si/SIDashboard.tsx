@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useUserProfileStore } from "@/lib/si/userProfileStore";
@@ -132,10 +132,9 @@ const CTA_BUTTON: Record<string, React.CSSProperties> = {
   hiring:  { background: "rgba(37,99,235,0.08)",  color: "var(--si-signal-hiring)",   border: "1px solid rgba(37,99,235,0.2)"  },
 };
 
-// Deterministic urgency from signal id
 function urgencyFromId(id: string): number {
   const n = id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return (n % 3) + 3; // 3-5
+  return (n % 3) + 3;
 }
 
 function daysAgoLabel(iso: string) {
@@ -235,7 +234,6 @@ export default function SIDashboard() {
 
   const watchlistCount = watchedAccounts.length || 12;
 
-  // ── Shared token shorthands
   const cardStyle: React.CSSProperties = {
     backgroundColor: "var(--si-card-bg)",
     border: "1px solid var(--si-card-border)",
@@ -271,7 +269,6 @@ export default function SIDashboard() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Watchlist pill */}
           <button
             onClick={() => navigate("/si/watchlist")}
             style={{
@@ -297,7 +294,6 @@ export default function SIDashboard() {
             </span>
           </button>
 
-          {/* Search box */}
           <button
             onClick={() => navigate("/si/search")}
             style={{
@@ -313,13 +309,11 @@ export default function SIDashboard() {
             Search accounts, contacts...
           </button>
 
-          {/* Bell */}
           <button style={{ position: "relative", padding: 6, color: "var(--si-text-muted)", background: "none", border: "none", cursor: "pointer" }}>
             <Icon icon="solar:bell-linear" width={18} />
             <span style={{ position: "absolute", top: 5, right: 5, width: 7, height: 7, borderRadius: "50%", backgroundColor: "var(--si-primary)" }} />
           </button>
 
-          {/* Add Account */}
           <button
             onClick={() => navigate("/si/icp")}
             style={{
@@ -338,43 +332,91 @@ export default function SIDashboard() {
       {/* ── Body ────────────────────────────────────────────────────────── */}
       <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* ICP callout banner */}
-          {!icpBannerDismissed && profile?.icp && (
-            <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#E0E7FF] bg-[#EEF2FF] px-5 py-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex-shrink-0">
-                  <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4 text-[#6366F1]" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#3730A3]">
-                    We built your starting ICP from your website.
-                  </p>
-                  <p className="text-sm text-[#4338CA] mt-0.5">
-                    Your signal feed is already filtered for accounts that fit. Refine your ICP anytime.
-                  </p>
-                </div>
+        {/* ── THIN METRICS BAR ─────────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex", alignItems: "center", gap: 0,
+            backgroundColor: "var(--si-card-bg)",
+            border: "1px solid var(--si-card-border)",
+            borderRadius: 8,
+            padding: "0 16px",
+            height: 36,
+            marginBottom: 12,
+          }}
+        >
+          {STATS.map((s, i) => (
+            <Fragment key={s.label}>
+              {i > 0 && (
+                <div style={{ width: 1, height: 16, backgroundColor: "var(--si-card-border)", flexShrink: 0 }} />
+              )}
+              <div
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: i === 0 ? "0 16px 0 0" : "0 16px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 9,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    color: "var(--si-text-muted)",
+                  }}
+                >
+                  {s.label}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)" }}>
+                  {s.value}
+                </span>
+                <span style={{ fontSize: 10, color: s.subColor }}>
+                  {s.sub}
+                </span>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <a
-                  href="/si/icp"
-                  className="text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5] transition-colors whitespace-nowrap"
-                >
-                  Refine ICP →
-                </a>
-                <button
-                  onClick={handleDismissIcpBanner}
-                  className="text-[#6366F1] hover:text-[#4F46E5] transition-colors"
-                  aria-label="Dismiss"
-                >
-                  <Icon icon="solar:close-circle-linear" className="w-4 h-4" />
-                </button>
+            </Fragment>
+          ))}
+        </div>
+
+        {/* ── ICP CALLOUT BANNER ───────────────────────────────────────── */}
+        {!icpBannerDismissed && profile?.icp && (
+          <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#E0E7FF] bg-[#EEF2FF] px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex-shrink-0">
+                <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4 text-[#6366F1]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#3730A3]">
+                  We built your starting ICP from your website.
+                </p>
+                <p className="text-sm text-[#4338CA] mt-0.5">
+                  Your signal feed is already filtered for accounts that fit. Refine your ICP anytime.
+                </p>
               </div>
             </div>
-          )}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <a
+                href="/si/icp"
+                className="text-sm font-semibold text-[#6366F1] hover:text-[#4F46E5] transition-colors whitespace-nowrap"
+              >
+                Refine ICP →
+              </a>
+              <button
+                onClick={handleDismissIcpBanner}
+                className="text-[#6366F1] hover:text-[#4F46E5] transition-colors"
+                aria-label="Dismiss"
+              >
+                <Icon icon="solar:close-circle-linear" className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
-          {/* HERO BANNER */}
+        {/* ── HERO ROW: Hero Banner + Best Call side by side ───────────── */}
+        <div style={{ display: "flex", gap: 20, alignItems: "stretch" }}>
+
+          {/* Left: Hero Banner */}
           <div
             style={{
+              flex: 1,
               borderRadius: 14,
               padding: "24px 28px",
               background: "linear-gradient(135deg, #080D1A 0%, #0F0A2E 50%, #111827 100%)",
@@ -383,7 +425,6 @@ export default function SIDashboard() {
               position: "relative",
             }}
           >
-            {/* Subtle glow orb — clipped to its own layer, never overlaps text */}
             <div style={{
               position: "absolute", top: 0, right: 0, bottom: 0,
               width: 220, borderRadius: "0 14px 14px 0",
@@ -443,338 +484,361 @@ export default function SIDashboard() {
               View Opp Playbook
               <Icon icon="solar:arrow-right-linear" width={13} />
             </button>
-          </div>
 
-          {/* AI MORNING BRIEF */}
-          <div style={cardStyle}>
-            {/* Card header */}
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "14px 20px 12px",
-                borderBottom: "1px solid var(--si-card-border)",
-              }}
-            >
-              <div
-                style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15))",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#A5B4FC" }} />
-              </div>
-              <span style={labelStyle}>✦ AI Morning Brief · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}</span>
-            </div>
-
-            <div style={{ padding: "14px 20px 16px" }}>
-              <p
-                style={{
-                  ...displayFont,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "var(--si-primary)",
-                  marginBottom: 14,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                3 accounts in your book are in active buying motion.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {shuffledBriefAccounts.map((acct, i) => (
-                  <div
-                    key={acct.id}
-                    style={{
-                      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
-                      padding: "11px 0",
-                      borderBottom: i < MORNING_BRIEF_ACCOUNTS.length - 1 ? "1px solid var(--si-card-border)" : "none",
-                    }}
-                  >
-                    <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--si-text-secondary)", flex: 1 }}>
-                      <button
-                        onClick={() => navigate(`/si/accounts/${acct.id}`)}
-                        style={{ ...displayFont, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
-                      >{acct.name}</button>
-                      {" — "}
-                      {acct.context}
-                    </p>
-                    <button
-                      onClick={() => navigate(`/si/playbook/${acct.id}`)}
-                      style={{
-                        ...CTA_BUTTON[acct.ctaStyle],
-                        ...displayFont,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: "5px 12px",
-                        borderRadius: 7,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        letterSpacing: "0.01em",
-                      }}
-                    >
-                      {acct.cta}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* STATS ROW */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            {STATS.map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  ...cardStyle,
-                  padding: "16px 18px",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                {/* Subtle top accent bar */}
-                <div style={{
-                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
-                  background: `linear-gradient(90deg, ${s.iconColor}44, transparent)`,
-                  borderRadius: "12px 12px 0 0",
-                }} />
-                <p style={labelStyle}>{s.label}</p>
-                <p
+            {/* Signal evidence chips */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, flexWrap: "wrap", position: "relative" }}>
+              {[
+                { icon: "solar:bolt-bold",              label: "Intent surge · 8d active",     color: "#A78BFA", bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.2)"  },
+                { icon: "solar:users-group-rounded-bold", label: "3 decision-makers ID'd",     color: "#67E8F9", bg: "rgba(6,182,212,0.1)",    border: "rgba(6,182,212,0.18)"  },
+                { icon: "solar:hourglass-bold",         label: "Window closes ~3d",            color: "#FCA5A5", bg: "rgba(239,68,68,0.1)",    border: "rgba(239,68,68,0.18)"  },
+              ].map((chip) => (
+                <span
+                  key={chip.label}
                   style={{
-                    ...displayFont,
-                    fontSize: 36,
-                    fontWeight: 800,
-                    letterSpacing: "-0.04em",
-                    lineHeight: 1,
-                    color: "var(--si-text-primary)",
-                    margin: "10px 0 8px",
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "4px 10px", borderRadius: 999,
+                    backgroundColor: chip.bg,
+                    border: `1px solid ${chip.border}`,
+                    fontSize: 11, fontWeight: 600,
+                    color: chip.color,
+                    letterSpacing: "0.01em",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}
                 >
-                  {s.value}
-                </p>
-                <p style={{ fontSize: 11, fontWeight: 500, color: s.subColor }}>
-                  {s.sub}
-                </p>
-              </div>
-            ))}
+                  <Icon icon={chip.icon} width={10} />
+                  {chip.label}
+                </span>
+              ))}
+            </div>
           </div>
 
-        {/* ── Bottom row: signals + sidebar ─────────────────────────── */}
+          {/* Right: Best Call to Make Today */}
+          <div
+            style={{
+              width: 300,
+              flexShrink: 0,
+              borderRadius: 14,
+              overflow: "hidden",
+              border: "1px solid var(--si-card-border)",
+              backgroundColor: "var(--si-card-bg)",
+            }}
+          >
+            <div style={{ padding: "20px 20px 20px", height: "100%", boxSizing: "border-box", background: "linear-gradient(160deg, rgba(20,184,166,0.08) 0%, transparent 60%)", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#14B8A6" }} />
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#14B8A6" }}>
+                  Best call to make today
+                </span>
+              </div>
+              <p style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
+                <button
+                  onClick={() => navigate(`/si/accounts/${bestCallAccount.id}`)}
+                  style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer", letterSpacing: "-0.02em" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+                >{bestCallAccount.name}</button>
+                {" — "}
+                <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>{bestCallAccount.contact}</span>
+              </p>
+              <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)" }}>
+                {bestCallAccount.bestCallReason}
+              </p>
+              <button
+                onClick={() => navigate(`/si/playbook/${bestCallAccount.id}`)}
+                style={{
+                  marginTop: "auto",
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  fontSize: 12, fontWeight: 700,
+                  padding: "9px 16px", borderRadius: 999, cursor: "pointer",
+                  backgroundColor: "#134E4A", color: "#fff", border: "none",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0F3D39")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#134E4A")}
+              >
+                <Icon icon="solar:letter-bold" width={13} />
+                Draft outreach now
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── AI MORNING BRIEF ─────────────────────────────────────────── */}
+        <div style={cardStyle}>
+          <div
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "14px 20px 12px",
+              borderBottom: "1px solid var(--si-card-border)",
+            }}
+          >
+            <div
+              style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15))",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#A5B4FC" }} />
+            </div>
+            <span style={labelStyle}>✦ AI Morning Brief · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}</span>
+          </div>
+
+          <div style={{ padding: "14px 20px 16px" }}>
+            <p
+              style={{
+                ...displayFont,
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--si-primary)",
+                marginBottom: 14,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              3 accounts in your book are in active buying motion.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {shuffledBriefAccounts.map((acct, i) => (
+                <div
+                  key={acct.id}
+                  style={{
+                    display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+                    padding: "11px 0",
+                    borderBottom: i < MORNING_BRIEF_ACCOUNTS.length - 1 ? "1px solid var(--si-card-border)" : "none",
+                  }}
+                >
+                  <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--si-text-secondary)", flex: 1 }}>
+                    <button
+                      onClick={() => navigate(`/si/accounts/${acct.id}`)}
+                      style={{ ...displayFont, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+                    >{acct.name}</button>
+                    {" — "}
+                    {acct.context}
+                  </p>
+                  <button
+                    onClick={() => navigate(`/si/playbook/${acct.id}`)}
+                    style={{
+                      ...CTA_BUTTON[acct.ctaStyle],
+                      ...displayFont,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 12px",
+                      borderRadius: 7,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {acct.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── BOTTOM ROW: signals + sidebar ────────────────────────────── */}
         <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
           {/* LEFT: Priority Signals */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-
-          {/* PRIORITY SIGNALS */}
-          <div>
-            {/* Section header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#F59E0B", display: "inline-block" }} />
-                <span style={labelStyle}>Priority Signals</span>
+          <div style={{ flex: 1, minWidth: 0, height: "100%", overflowY: "auto" }}>
+            <div>
+              {/* Section header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#F59E0B", display: "inline-block" }} />
+                  <span style={labelStyle}>Priority Signals</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {FILTER_TABS.map((tab) => {
+                    const active = signalFilter === tab.key;
+                    const count = tab.key === "all"
+                      ? MOCK_SIGNALS.length
+                      : MOCK_SIGNALS.filter((s) => s.type === tab.key).length;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setSignalFilter(tab.key)}
+                        style={{
+                          ...displayFont,
+                          fontSize: 11, fontWeight: 600,
+                          padding: "4px 10px", borderRadius: 20, cursor: "pointer",
+                          transition: "all 0.15s",
+                          ...(active
+                            ? { backgroundColor: "var(--si-primary)", color: "#fff", border: "1px solid transparent" }
+                            : { backgroundColor: "var(--si-card-bg)", color: "var(--si-text-secondary)", border: "1px solid var(--si-card-border)" }
+                          ),
+                        }}
+                      >
+                        {tab.label}
+                        {tab.key === "all" && (
+                          <span
+                            style={{
+                              marginLeft: 5, fontSize: 10, fontWeight: 700,
+                              padding: "0px 5px", borderRadius: 10,
+                              backgroundColor: active ? "rgba(255,255,255,0.2)" : "var(--si-bg)",
+                              color: active ? "#fff" : "var(--si-text-muted)",
+                            }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => navigate("/si/signals")}
+                    style={{ ...displayFont, fontSize: 12, fontWeight: 600, color: "var(--si-primary)", background: "none", border: "none", cursor: "pointer", marginLeft: 4 }}
+                  >
+                    View all →
+                  </button>
+                </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {/* Filter tabs */}
-                {FILTER_TABS.map((tab) => {
-                  const active = signalFilter === tab.key;
-                  const count = tab.key === "all"
-                    ? MOCK_SIGNALS.length
-                    : MOCK_SIGNALS.filter((s) => s.type === tab.key).length;
+
+              {/* Signal cards — top 3 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {filteredSignals.slice(0, 3).map((signal) => {
+                  const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === signal.accountId);
+                  if (!account) return null;
+                  const meta = SIGNAL_META[signal.type] ?? { label: signal.type, color: "#6366F1", bg: "rgba(99,102,241,0.1)" };
+                  const urgency = urgencyFromId(signal.id);
+
                   return (
-                    <button
-                      key={tab.key}
-                      onClick={() => setSignalFilter(tab.key)}
+                    <div
+                      key={signal.id}
                       style={{
-                        ...displayFont,
-                        fontSize: 11, fontWeight: 600,
-                        padding: "4px 10px", borderRadius: 20, cursor: "pointer",
-                        transition: "all 0.15s",
-                        ...(active
-                          ? { backgroundColor: "var(--si-primary)", color: "#fff", border: "1px solid transparent" }
-                          : { backgroundColor: "var(--si-card-bg)", color: "var(--si-text-secondary)", border: "1px solid var(--si-card-border)" }
-                        ),
+                        ...cardStyle,
+                        padding: "14px 18px",
+                        transition: "border-color 0.15s",
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--si-card-border)")}
                     >
-                      {tab.label}
-                      {tab.key === "all" && (
-                        <span
-                          style={{
-                            marginLeft: 5, fontSize: 10, fontWeight: 700,
-                            padding: "0px 5px", borderRadius: 10,
-                            backgroundColor: active ? "rgba(255,255,255,0.2)" : "var(--si-bg)",
-                            color: active ? "#fff" : "var(--si-text-muted)",
-                          }}
-                        >
-                          {count}
+                      {/* Top row */}
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
+                          <AccountInitialBadge name={account.accountName} domain={account.domain} size={34} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              <button
+                                onClick={() => navigate(`/si/accounts/${account.id}`)}
+                                style={{ ...displayFont, fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
+                              >
+                                {account.accountName}
+                              </button>
+                              <span style={{ fontSize: 11, color: "var(--si-text-muted)" }}>{account.domain}</span>
+                              <span
+                                style={{
+                                  ...displayFont,
+                                  fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
+                                  padding: "2px 7px", borderRadius: 5,
+                                  backgroundColor: meta.bg, color: meta.color,
+                                }}
+                              >
+                                {meta.label}
+                              </span>
+                              {signal.signalLevel === "contact" && (
+                                <span
+                                  style={{
+                                    ...displayFont,
+                                    fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+                                    padding: "2px 7px", borderRadius: 5,
+                                    backgroundColor: "#F3F4F6", color: "#4B5563",
+                                  }}
+                                >
+                                  CONTACT
+                                </span>
+                              )}
+                            </div>
+                            {signal.signalLevel === "contact" && signal.contactName && (
+                              <p style={{ fontSize: 11, color: "var(--si-text-muted)", marginTop: 3 }}>
+                                {signal.contactName} · {signal.contactTitle}
+                              </p>
+                            )}
+                            <p style={{ fontSize: 12, lineHeight: 1.6, color: "var(--si-text-secondary)", marginTop: 5 }}>
+                              <span style={{ fontWeight: 600, color: "var(--si-text-primary)" }}>{signal.headline}. </span>
+                              {signal.summary}
+                            </p>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 11, color: "var(--si-text-muted)", flexShrink: 0, marginTop: 2 }}>
+                          {daysAgoLabel(signal.detectedAt)}
                         </span>
-                      )}
-                    </button>
+                      </div>
+
+                      {/* Bottom row */}
+                      <div
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          marginTop: 12, paddingTop: 10,
+                          borderTop: "1px solid var(--si-card-border)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <button
+                            onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 5,
+                              ...displayFont, fontSize: 11, fontWeight: 700,
+                              padding: "5px 12px", borderRadius: 7, cursor: "pointer",
+                              backgroundColor: "rgba(99,102,241,0.08)",
+                              color: "var(--si-primary)",
+                              border: "1px solid rgba(99,102,241,0.18)",
+                            }}
+                          >
+                            <Icon icon="solar:letter-linear" width={11} />
+                            Draft outreach
+                          </button>
+                          <button
+                            onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 5,
+                              ...displayFont, fontSize: 11, fontWeight: 600,
+                              padding: "5px 12px", borderRadius: 7, cursor: "pointer",
+                              backgroundColor: "var(--si-bg)",
+                              color: "var(--si-text-secondary)",
+                              border: "1px solid var(--si-card-border)",
+                            }}
+                          >
+                            <Icon icon="solar:document-text-linear" width={11} />
+                            View playbook
+                          </button>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontSize: 10, color: "var(--si-text-muted)", fontWeight: 500 }}>Urgency</span>
+                          <UrgencyDots level={urgency} />
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
+              </div>
+
+              {/* View all signals link */}
+              <div style={{ textAlign: "center", paddingTop: 12 }}>
                 <button
-                  onClick={() => navigate("/si/signals")}
-                  style={{ ...displayFont, fontSize: 12, fontWeight: 600, color: "var(--si-primary)", background: "none", border: "none", cursor: "pointer", marginLeft: 4 }}
+                  onClick={() => navigate("/si/watchlist")}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    fontSize: 12, fontWeight: 600, color: "var(--si-primary)",
+                  }}
                 >
-                  View all →
+                  View all signals →
                 </button>
               </div>
             </div>
-
-            {/* Signal cards */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {filteredSignals.map((signal) => {
-                const account = MOCK_WATCHLIST_ACCOUNTS.find((a) => a.id === signal.accountId);
-                if (!account) return null;
-                const meta = SIGNAL_META[signal.type] ?? { label: signal.type, color: "#6366F1", bg: "rgba(99,102,241,0.1)" };
-                const urgency = urgencyFromId(signal.id);
-
-                return (
-                  <div
-                    key={signal.id}
-                    style={{
-                      ...cardStyle,
-                      padding: "14px 18px",
-                      transition: "border-color 0.15s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--si-card-border)")}
-                  >
-                    {/* Top row */}
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
-                        <AccountInitialBadge name={account.accountName} domain={account.domain} size={34} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <button
-                              onClick={() => navigate(`/si/accounts/${account.id}`)}
-                              style={{ ...displayFont, fontSize: 13, fontWeight: 700, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
-                            >
-                              {account.accountName}
-                            </button>
-                            <span style={{ fontSize: 11, color: "var(--si-text-muted)" }}>{account.domain}</span>
-                            <span
-                              style={{
-                                ...displayFont,
-                                fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
-                                padding: "2px 7px", borderRadius: 5,
-                                backgroundColor: meta.bg, color: meta.color,
-                              }}
-                            >
-                              {meta.label}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: 12, lineHeight: 1.6, color: "var(--si-text-secondary)", marginTop: 5 }}>
-                            <span style={{ fontWeight: 600, color: "var(--si-text-primary)" }}>{signal.headline}. </span>
-                            {signal.summary}
-                          </p>
-                        </div>
-                      </div>
-                      <span style={{ fontSize: 11, color: "var(--si-text-muted)", flexShrink: 0, marginTop: 2 }}>
-                        {daysAgoLabel(signal.detectedAt)}
-                      </span>
-                    </div>
-
-                    {/* Bottom row */}
-                    <div
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        marginTop: 12, paddingTop: 10,
-                        borderTop: "1px solid var(--si-card-border)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <button
-                          onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 5,
-                            ...displayFont, fontSize: 11, fontWeight: 700,
-                            padding: "5px 12px", borderRadius: 7, cursor: "pointer",
-                            backgroundColor: "rgba(99,102,241,0.08)",
-                            color: "var(--si-primary)",
-                            border: "1px solid rgba(99,102,241,0.18)",
-                          }}
-                        >
-                          <Icon icon="solar:letter-linear" width={11} />
-                          Draft outreach
-                        </button>
-                        <button
-                          onClick={() => navigate(`/si/playbook/${signal.accountId}`)}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 5,
-                            ...displayFont, fontSize: 11, fontWeight: 600,
-                            padding: "5px 12px", borderRadius: 7, cursor: "pointer",
-                            backgroundColor: "var(--si-bg)",
-                            color: "var(--si-text-secondary)",
-                            border: "1px solid var(--si-card-border)",
-                          }}
-                        >
-                          <Icon icon="solar:document-text-linear" width={11} />
-                          View playbook
-                        </button>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 10, color: "var(--si-text-muted)", fontWeight: 500 }}>Urgency</span>
-                        <UrgencyDots level={urgency} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
           </div>{/* end left signals column */}
 
-        {/* ── RIGHT SIDEBAR ─────────────────────────────────────────────── */}
-        <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 0, position: "sticky", top: 57, borderRadius: 16, overflow: "hidden", border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}>
+          {/* ── RIGHT SIDEBAR: Queue only ──────────────────────────────── */}
+          <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 0, position: "sticky", top: 57, borderRadius: 16, overflow: "hidden", border: "1px solid var(--si-card-border)", backgroundColor: "var(--si-card-bg)" }}>
 
-          {/* Best Call Hero */}
-          <div style={{ padding: "18px 18px 16px", background: "linear-gradient(160deg, rgba(20,184,166,0.08) 0%, transparent 60%)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <Icon icon="solar:stars-bold-duotone" width={14} style={{ color: "#14B8A6" }} />
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#14B8A6" }}>
-                Best call to make today
-              </span>
-            </div>
-            <p style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", lineHeight: 1.3, letterSpacing: "-0.02em" }}>
-              <button
-                onClick={() => navigate(`/si/accounts/${bestCallAccount.id}`)}
-                style={{ ...displayFont, fontSize: 16, fontWeight: 800, color: "var(--si-text-primary)", background: "none", border: "none", padding: 0, cursor: "pointer", letterSpacing: "-0.02em" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--si-primary)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--si-text-primary)")}
-              >{bestCallAccount.name}</button>
-              {" — "}
-              <span style={{ color: "var(--si-text-secondary)", fontWeight: 600 }}>{bestCallAccount.contact}</span>
-            </p>
-            <p style={{ fontSize: 12, lineHeight: 1.65, color: "var(--si-text-secondary)", marginTop: 8 }}>
-              {bestCallAccount.bestCallReason}
-            </p>
-            <button
-              onClick={() => navigate(`/si/playbook/${bestCallAccount.id}`)}
-              style={{
-                marginTop: 14,
-                width: "100%",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                fontSize: 12, fontWeight: 700,
-                padding: "9px 16px", borderRadius: 999, cursor: "pointer",
-                backgroundColor: "#134E4A", color: "#fff", border: "none",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0F3D39")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#134E4A")}
-            >
-              <Icon icon="solar:letter-bold" width={13} />
-              Draft outreach now
-            </button>
-          </div>
-
-          {/* Queue */}
-          <div style={{ borderTop: "1px solid var(--si-card-border)" }}>
             {/* Queue header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px 10px" }}>
               <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--si-text-primary)" }}>
@@ -785,17 +849,18 @@ export default function SIDashboard() {
               </span>
             </div>
 
-            {/* Queue items */}
+            {/* Queue items — top 3 */}
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {QUEUE_ITEMS.map((item, i) => {
+              {QUEUE_ITEMS.slice(0, 3).map((item, i) => {
                 const checked = checkedItems.has(item.id);
+                const isOverdue = item.badgeColor === "#EF4444";
                 return (
                   <div
                     key={item.id}
                     style={{
                       display: "flex", alignItems: "flex-start", gap: 10,
                       padding: "10px 18px",
-                      borderTop: i === 0 ? "none" : "1px solid var(--si-card-border)",
+                      borderTop: "1px solid var(--si-card-border)",
                       backgroundColor: checked ? "rgba(0,0,0,0.02)" : "transparent",
                     }}
                   >
@@ -837,16 +902,15 @@ export default function SIDashboard() {
                           <span style={{ fontSize: 11, color: "#14B8A6", lineHeight: 1.4 }}>{item.signal}</span>
                         </div>
                       )}
-                      <p style={{ fontSize: 11, color: "var(--si-text-muted)", marginTop: 2 }}>{item.meta}</p>
+                      <p style={{ fontSize: 11, color: isOverdue ? "#EF4444" : "var(--si-text-muted)", marginTop: 2 }}>{item.meta}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
 
-      </div>
+        </div>
       </div>
     </div>
   );

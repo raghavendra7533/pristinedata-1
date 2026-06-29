@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { MOCK_WATCHLIST_ACCOUNTS, MOCK_PLAYBOOKS } from "@/lib/si/mockData";
-import type { PlaybookData } from "@/lib/si/types";
+import type { PlaybookData, Stakeholder } from "@/lib/si/types";
 import { AccountContextPanel } from "@/components/si/playbook/AccountContextPanel";
 import { PlaybookTabs } from "@/components/si/playbook/PlaybookTabs";
 import { ScheduleMeetingModal } from "@/components/si/playbook/ScheduleMeetingModal";
 import { AddMeetingNotesModal } from "@/components/si/playbook/AddMeetingNotesModal";
+import { AddStakeholderModal } from "@/components/si/shared/AddStakeholderModal";
 
 export default function SIPlaybook() {
   const { accountId } = useParams<{ accountId: string }>();
@@ -31,6 +32,8 @@ export default function SIPlaybook() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showAddStakeholderModal, setShowAddStakeholderModal] = useState(false);
+  const [localStakeholders, setLocalStakeholders] = useState<Stakeholder[]>([]);
   const [hasMeetingNotes, setHasMeetingNotes] = useState(false);
   const [activeTabOverride, setActiveTabOverride] = useState<"Next Actions" | undefined>(undefined);
 
@@ -66,6 +69,13 @@ export default function SIPlaybook() {
 
   return (
     <div className="flex h-screen" data-theme="si">
+      {showAddStakeholderModal && (
+        <AddStakeholderModal
+          onClose={() => setShowAddStakeholderModal(false)}
+          onAdd={(s) => setLocalStakeholders((prev) => [...prev, s])}
+        />
+      )}
+
       {/* Left: sticky context panel */}
       <div
         className="w-[300px] flex-shrink-0 border-r border-[--si-card-border] overflow-y-auto p-4 sticky top-0 h-screen"
@@ -74,8 +84,8 @@ export default function SIPlaybook() {
         {account && (
           <AccountContextPanel
             account={account}
-            stakeholders={playbook.stakeholders}
-            onAddStakeholder={() => {}}
+            stakeholders={[...playbook.stakeholders, ...localStakeholders]}
+            onAddStakeholder={() => setShowAddStakeholderModal(true)}
           />
         )}
       </div>

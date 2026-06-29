@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import type { WatchlistAccount, Stakeholder } from "@/lib/si/types";
 import { IntentScoreBadge } from "@/components/si/shared/IntentScoreBadge";
 import { StakeholderCard } from "./StakeholderCard";
@@ -119,9 +120,10 @@ export function AccountContextPanel({ account, stakeholders, onAddStakeholder, h
       {/* Add Stakeholder */}
       <button
         onClick={onAddStakeholder}
-        className="w-full text-sm text-[--si-primary] border border-[--si-primary] rounded-[8px] px-3 py-2 hover:bg-[--si-primary] hover:text-white transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold text-[--si-primary] hover:opacity-80 transition-opacity"
       >
-        + Add Stakeholder
+        <Icon icon="solar:add-circle-linear" className="w-3.5 h-3.5" />
+        Add stakeholder
       </button>
     </div>
   );
